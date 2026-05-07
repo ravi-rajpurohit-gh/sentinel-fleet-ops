@@ -203,12 +203,24 @@ hr { border-color: #1a1a1d !important; margin: 1.4rem 0 1rem !important; }
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
 [data-testid="stHeader"] { background: transparent; }
-[data-testid="stToolbar"] { display: none; }
 .stDeployButton { display: none; }
 
 div[data-baseweb="select"] > div {
     background: #141416 !important;
     border-color: #222226 !important;
+}
+
+[data-testid="stDataFrame"] [role="columnheader"],
+[data-testid="stDataFrame"] [data-testid="StyledDataFrameHeader"],
+[data-testid="stDataFrame"] thead th,
+[data-testid="stDataFrame"] thead th > div {
+    text-align: center !important;
+    justify-content: center !important;
+}
+[data-testid="stDataFrame"] [role="columnheader"] > div,
+[data-testid="stDataFrame"] [role="columnheader"] span {
+    text-align: center !important;
+    width: 100% !important;
 }
 </style>
 """
@@ -236,18 +248,24 @@ def load_run_results() -> dict:
         return json.load(f)
 
 
+def get_generated_at(rr: dict) -> str:
+    """Locate the build timestamp. dbt 1.10 puts it under metadata."""
+    return (rr.get("metadata", {}) or {}).get("generated_at") or rr.get("generated_at") or ""
+
+
 def pipeline_status() -> tuple[str, str, str]:
     rr = load_run_results()
     if not rr:
-        return ("warn", "PIPELINE STATUS UNAVAILABLE", "—")
+        return ("warn", "PIPELINE STATUS UNAVAILABLE", "")
     results = rr.get("results", [])
     n_total = len(results)
     n_pass = sum(1 for r in results if r.get("status") in ("pass", "success"))
+    ts = get_generated_at(rr)
     if n_total == 0:
-        return ("warn", "NO PIPELINE RUNS RECORDED", "—")
+        return ("warn", "NO PIPELINE RUNS RECORDED", ts)
     if n_pass == n_total:
-        return ("ok", f"PIPELINE NOMINAL · {n_pass}/{n_total}", rr.get("generated_at", ""))
-    return ("fail", f"PIPELINE DEGRADED · {n_pass}/{n_total}", rr.get("generated_at", ""))
+        return ("ok", f"PIPELINE NOMINAL · {n_pass}/{n_total}", ts)
+    return ("fail", f"PIPELINE DEGRADED · {n_pass}/{n_total}", ts)
 
 
 # ---------------------------------------------------------------------------
@@ -358,17 +376,16 @@ kpi = q(f"""
         (select n from failed_comp)  as failed_components_30d
 """).iloc[0]
 
-c1, c2, c3, c4, c5 = st.columns(5)
+c1, c2, c3, c4, c5, c6 = st.columns(6)
 c1.metric("Active towers", int(kpi.active_towers))
 c2.metric("Active deployments", int(kpi.active_deployments))
-c3.metric(
-    "Open incidents",
-    int(kpi.open_incidents),
-    delta=f"{int(kpi.critical_open)} P1/P2",
-    delta_color="inverse" if kpi.critical_open > 0 else "off",
+c3.metric("Open incidents", int(kpi.open_incidents))
+c4.metric("Critical · P1 + P2", int(kpi.critical_open))
+c5.metric(
+    "Comms uptime · 7 days",
+    f"{kpi.uptime_7d:.1f}%" if pd.notna(kpi.uptime_7d) else "—",
 )
-c4.metric("Comms uptime · 7d", f"{kpi.uptime_7d:.1f}%" if pd.notna(kpi.uptime_7d) else "—")
-c5.metric("Component failures · 30d", int(kpi.failed_components_30d))
+c6.metric("Component failures · 30 days", int(kpi.failed_components_30d))
 
 
 tab_ops, tab_rel, tab_pipeline = st.tabs(["Operations", "Reliability", "Pipeline Health"])
@@ -414,6 +431,8 @@ with tab_ops:
             showsubunits=True,    subunitcolor=PALETTE["border"],
             showcountries=True,   countrycolor=PALETTE["border"],
             showframe=False,
+            fitbounds="locations",
+            visible=True,
         )
         fig.update_traces(
             marker=dict(line=dict(width=0.5, color=PALETTE["bg"])),
@@ -425,26 +444,28 @@ with tab_ops:
                 thickness=10, len=0.5, x=1.0,
                 outlinewidth=0,
             ),
+            geo=dict(projection_scale=1.05),
         )
-        style_chart(fig, height=420, show_legend=False)
-        st.plotly_chart(fig, use_container_width=True)
+        style_chart(fig, height=480, show_legend=False)
+        st.plotly_chart(fig, width="stretch")
     with col_right:
         display = site_status[["site_name", "region", "env",
                                "tower_count", "active_tower_count",
                                "maintenance_tower_count"]].copy()
-        display.columns = ["Site", "Region", "Env", "Towers", "Active", "Maint."]
-        st.dataframe(display, hide_index=True, use_container_width=True, height=420)
+        display.columns = ["Site", "Region", "Environment",
+                           "Towers", "Active", "Maintenance"]
+        st.dataframe(display, hide_index=True, width="stretch", height=480)
 
-    col_a, col_b = st.columns(2)
+    col_a, col_b = st.columns(2, gap="large")
     with col_a:
         st.markdown("## Active deployments")
         active_deps = q(f"""
             select
-                mission_name as Mission,
-                tower_id     as Tower,
-                site_name    as Site,
-                start_ts     as "Started",
-                duration_days as "Days"
+                mission_name  as "Mission",
+                tower_id      as "Tower",
+                site_name     as "Site",
+                start_ts      as "Started",
+                duration_days as "Days deployed"
             from fct_deployment_status
             where status = 'active' {site_filter_clause}
             order by start_ts desc
@@ -457,19 +478,19 @@ with tab_ops:
                 unsafe_allow_html=True,
             )
         else:
-            st.dataframe(active_deps, hide_index=True, use_container_width=True, height=360)
+            st.dataframe(active_deps, hide_index=True, width="stretch", height=360)
 
     with col_b:
         st.markdown("## Open incidents")
         open_inc = q(f"""
             select
-                i.incident_id as ID,
-                i.severity    as Sev,
-                i.category    as Category,
-                i.tower_id    as Tower,
-                t.site_name   as Site,
-                i.opened_at   as Opened,
-                date_diff('hour', i.opened_at, current_timestamp) as "Age (hr)",
+                i.incident_id as "Incident",
+                i.severity    as "Severity",
+                i.category    as "Category",
+                i.tower_id    as "Tower",
+                t.site_name   as "Site",
+                i.opened_at   as "Opened",
+                date_diff('hour', i.opened_at, current_timestamp) as "Age (hours)",
                 i.root_cause  as "Root cause"
             from stg_incidents i
             join dim_tower t using (tower_id)
@@ -486,20 +507,20 @@ with tab_ops:
                 unsafe_allow_html=True,
             )
         else:
-            st.dataframe(open_inc, hide_index=True, use_container_width=True, height=360)
+            st.dataframe(open_inc, hide_index=True, width="stretch", height=360)
 
     st.markdown("## Inventory below reorder threshold")
     low_inv = q("""
         select
-            part_number    as "Part",
+            part_number    as "Part number",
             description    as "Description",
             category       as "Category",
             on_hand        as "On hand",
             allocated      as "Allocated",
             available      as "Available",
-            reorder_point  as "Reorder pt",
+            reorder_point  as "Reorder point",
             stock_status   as "Status",
-            lead_time_days as "Lead (d)"
+            lead_time_days as "Lead time (days)"
         from fct_inventory_status
         where stock_status in ('critical', 'reorder', 'watch')
         order by case stock_status when 'critical' then 1 when 'reorder' then 2 else 3 end,
@@ -512,7 +533,7 @@ with tab_ops:
             unsafe_allow_html=True,
         )
     else:
-        st.dataframe(low_inv, hide_index=True, use_container_width=True)
+        st.dataframe(low_inv, hide_index=True, width="stretch")
 
 
 # ---------------------------------------------------------------------------
@@ -557,14 +578,14 @@ with tab_rel:
         )
         fig.update_traces(marker_line_width=0)
         style_chart(fig, height=360)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     with col_r:
         display = mtbf.copy()
-        display.columns = ["Component", "Target hrs", "Observed hrs",
-                           "Installed", "Failed", "Failure %"]
-        display["Target hrs"] = display["Target hrs"].round(0).astype(int)
-        display["Observed hrs"] = display["Observed hrs"].round(0)
-        st.dataframe(display, hide_index=True, use_container_width=True, height=360)
+        display.columns = ["Component", "Target hours", "Observed hours",
+                           "Installed", "Failed", "Failure rate (%)"]
+        display["Target hours"] = display["Target hours"].round(0).astype(int)
+        display["Observed hours"] = display["Observed hours"].round(0)
+        st.dataframe(display, hide_index=True, width="stretch", height=360)
 
     st.markdown("## Comms uptime and sensor health · daily")
     uptime = q(f"""
@@ -595,9 +616,9 @@ with tab_rel:
     )
     fig.update_traces(line_width=2)
     style_chart(fig, height=300)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
-    col_a, col_b = st.columns(2)
+    col_a, col_b = st.columns(2, gap="large")
     with col_a:
         st.markdown("## Incidents by category · last 30 days")
         inc_cat = q(f"""
@@ -617,7 +638,7 @@ with tab_rel:
             )
             fig.update_traces(marker_line_width=0)
             style_chart(fig, height=320)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         else:
             st.markdown(
                 '<div style="color:#8a8784; font-size:0.85rem; padding:0.6rem 0;">'
@@ -637,7 +658,7 @@ with tab_rel:
             order by "Incidents" desc
             limit 10
         """)
-        st.dataframe(top_rc, hide_index=True, use_container_width=True, height=320)
+        st.dataframe(top_rc, hide_index=True, width="stretch", height=320)
 
 
 # ---------------------------------------------------------------------------
@@ -655,7 +676,6 @@ with tab_pipeline:
         )
     else:
         results = rr.get("results", [])
-        ts = rr.get("generated_at")
         elapsed = rr.get("elapsed_time", 0)
 
         n_total = len(results)
@@ -665,8 +685,8 @@ with tab_pipeline:
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Total steps", n_total)
         m2.metric("Passed", n_ok)
-        m3.metric("Failed", n_fail, delta_color="inverse" if n_fail else "off")
-        m4.metric("Elapsed", f"{elapsed:.2f}s")
+        m3.metric("Failed", n_fail)
+        m4.metric("Elapsed (seconds)", f"{elapsed:.2f}")
 
         rows = []
         for r in results:
@@ -692,12 +712,12 @@ with tab_pipeline:
                .reset_index()
         )
         agg["avg_s"] = agg["avg_s"].round(3)
-        agg.columns = ["Kind", "Steps", "Passed", "Failed", "Avg sec"]
-        st.dataframe(agg, hide_index=True, use_container_width=True)
+        agg.columns = ["Kind", "Steps", "Passed", "Failed", "Average elapsed (seconds)"]
+        st.dataframe(agg, hide_index=True, width="stretch")
 
         st.markdown("## Step detail")
-        rdf.columns = ["Kind", "Name", "Status", "Elapsed (s)"]
-        st.dataframe(rdf, hide_index=True, use_container_width=True, height=420)
+        rdf.columns = ["Kind", "Name", "Status", "Elapsed (seconds)"]
+        st.dataframe(rdf, hide_index=True, width="stretch", height=420)
 
     st.markdown("## Source freshness")
     freshness = q("""
@@ -712,11 +732,11 @@ with tab_pipeline:
         )
         select source as "Source",
                last_ts as "Last record",
-               date_diff('minute', last_ts, current_timestamp) as "Age (min)"
+               date_diff('minute', last_ts, current_timestamp) as "Age (minutes)"
         from sources
         order by source
     """)
-    st.dataframe(freshness, hide_index=True, use_container_width=True)
+    st.dataframe(freshness, hide_index=True, width="stretch")
     st.caption(
         "Freshness is the age of the most recent record per source against wall-clock now. "
         "Source-level thresholds are configured in dbt sources.yml; warnings escalate when the "
@@ -727,19 +747,21 @@ with tab_pipeline:
 # ---------------------------------------------------------------------------
 # Footer
 # ---------------------------------------------------------------------------
-gen_time = "—"
+gen_time = ""
 rr = load_run_results()
-if rr and rr.get("generated_at"):
+gen_at = get_generated_at(rr) if rr else ""
+if gen_at:
     try:
-        ts = datetime.fromisoformat(rr["generated_at"].replace("Z", "+00:00"))
+        ts = datetime.fromisoformat(gen_at.replace("Z", "+00:00"))
         gen_time = ts.strftime("%Y-%m-%d %H:%M UTC")
     except Exception:
-        gen_time = rr["generated_at"]
+        gen_time = gen_at
 
+build_segment = f"BUILD {gen_time}" if gen_time else "BUILD UNAVAILABLE"
 st.markdown(
     f'<div class="sfo-footer">'
     f'<span>SENTINEL FLEET OPERATIONS  ·  {site_label.upper()}</span>'
-    f'<span>BUILD {gen_time}</span>'
+    f'<span>{build_segment}</span>'
     f'</div>',
     unsafe_allow_html=True,
 )
