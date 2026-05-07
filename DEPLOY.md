@@ -1,6 +1,8 @@
-# Deploy to Streamlit Cloud
+# Deploy
 
-The repo is ready to deploy. Follow these steps to get a public URL.
+The repository is structured to deploy on Streamlit Community Cloud directly
+from GitHub. Runtime dependencies are minimal; the compiled DuckDB file ships
+with the repository, so no build step runs at deploy time.
 
 ## 1. Push to GitHub
 
@@ -9,49 +11,35 @@ cd ~/Downloads/Personal/sentinel-fleet-ops
 
 git init
 git add .
-git commit -m "Initial commit: Sentinel Fleet Ops demo"
+git commit -m "Initial commit"
 git branch -M main
 
-# Create a new repo on GitHub first (e.g. sentinel-fleet-ops, public),
-# then add the remote and push:
+# Create a public repository on GitHub first, then:
 git remote add origin git@github.com:ravi-rajpurohit-gh/sentinel-fleet-ops.git
 git push -u origin main
 ```
 
-## 2. Deploy on Streamlit Cloud
+## 2. Deploy on Streamlit Community Cloud
 
-1. Go to https://share.streamlit.io/
-2. Click **"New app"**
+1. Open https://share.streamlit.io/
+2. Click **New app**
 3. Repository: `ravi-rajpurohit-gh/sentinel-fleet-ops`
 4. Branch: `main`
 5. Main file path: `streamlit_app.py`
-6. Click **"Deploy"**
+6. Click **Deploy**
 
-Streamlit Cloud reads `requirements.txt` and installs only the runtime deps
-(streamlit, duckdb, pandas, plotly). dbt is **not** installed at runtime —
-the compiled DuckDB file (`data/sentinel.duckdb`) is checked into git, and the
-app reads from it directly.
+Streamlit Cloud installs only the dependencies in `requirements.txt`
+(`streamlit`, `duckdb`, `pandas`, `plotly`). The first deploy takes about
+two minutes; subsequent deploys are faster.
 
-The first deploy takes ~2 minutes. Subsequent deploys are fast (under a minute).
-
-## 3. After deploy
-
-- Add the live URL to `README.md` (replace the `_(deploy URL added...)_` placeholder).
-- Drop the URL into your conversation with Justin during the 3 PM call.
-- Optionally: add a project card on the portfolio at
-  `~/Downloads/Personal/portfolio/src/data/projects.ts` — but only after you've
-  used it in the call and decided it's worth featuring.
-
-## 4. Re-deploying after data tweaks
-
-If you change the generator or add models:
+## 3. Re-deploy after a data or model change
 
 ```bash
 .venv/bin/python scripts/generate_data.py
 cd dbt && DBT_PROFILES_DIR=. ../.venv/bin/dbt build && cd ..
 git add data/sentinel.duckdb dbt/target/run_results.json dbt/target/manifest.json data/raw/
-git commit -m "Refresh data + dbt build"
+git commit -m "Refresh data and dbt build"
 git push
 ```
 
-Streamlit Cloud auto-redeploys on push.
+Streamlit Cloud auto-redeploys on push to `main`.

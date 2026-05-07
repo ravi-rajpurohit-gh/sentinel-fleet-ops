@@ -1,34 +1,16 @@
-# Sentinel Fleet Ops
+# Sentinel Fleet Operations
 
-A small but realistic analytics stack simulating operations for a fleet of
-autonomous sensor towers — perimeter monitoring, deployment tracking, component
-reliability, and inventory health, all from one fact layer with three persona
-views.
+Operational telemetry, reliability, and pipeline status for an autonomous
+sensor tower fleet. Synthetic data feeds a dbt project on DuckDB, which
+materializes a small star schema consumed by a Streamlit interface.
 
-Built end-to-end in a single afternoon as a scoped demo of how I work as an
-analytics engineer on a hardware-fleet team: synthetic data → dbt models → tests
-→ a dual-audience Streamlit dashboard, deployed publicly.
+The application surfaces three operational views over a single fact layer:
 
-**Live demo:** _(deploy URL added after Streamlit Cloud deploy)_
-**Author:** [Ravi Rajpurohit](https://ravirajpurohit.com)
-
----
-
-## What this shows
-
-A fleet of 60 sensor towers across 10 sites generates 60 days of hourly
-telemetry, deployments, incidents, component lifecycle events, and inventory
-movements. The same fact layer powers three persona views:
-
-| Tab | Audience | Questions answered |
+| View | Audience | Questions answered |
 |---|---|---|
-| **Operations** | Site leads, ops managers | Where are towers? What's deployed where? What's broken right now? Are we about to run out of any part? |
-| **Reliability** | Reliability / sustainment engineering | Are components hitting their MTBF targets? How is uptime trending? What categories of failure dominate? |
-| **Data Trust** | Data team & stakeholders relying on this | Did the pipeline run? Are tests green? How fresh is each source? |
-
-Top-line KPIs roll up the answers visitors care about most: active towers,
-open incidents (with critical count), 7-day comms uptime, component failures
-in the last 30 days.
+| Operations | Site leads, ops managers | Where are towers and what are they running? What is open or broken? Are any parts about to run out? |
+| Reliability | Reliability and sustainment engineering | Are components hitting their MTBF targets? How is uptime trending? What categories of failure dominate the last 30 days? |
+| Pipeline Health | Data team and downstream consumers | Did the last build pass? How fresh is each source? What is the run elapsed time? |
 
 ---
 
@@ -36,128 +18,152 @@ in the last 30 days.
 
 ```mermaid
 flowchart LR
-    A[Synthetic Generator<br/>scripts/generate_data.py] -->|parquet| B[(data/raw/*.parquet<br/>7 sources, ~71k rows)]
+    A[Synthetic generator<br/>scripts/generate_data.py] -->|parquet| B[(data/raw/*.parquet)]
     B -->|read_parquet| C[dbt-duckdb<br/>staging tables]
-    C --> D[dbt-duckdb<br/>marts: dims + facts]
+    C --> D[dbt-duckdb<br/>marts: dims and facts]
     D --> E[(data/sentinel.duckdb)]
-    E --> F[Streamlit App<br/>3 persona tabs]
-    D -.->|run_results.json<br/>manifest.json| G[Data Trust Tab]
+    D -.->|run_results.json<br/>manifest.json| F[Pipeline Health view]
+    E --> G[Streamlit interface]
 ```
 
 **Stack:** Python · DuckDB · dbt-duckdb · Streamlit · Plotly
 
-**Why this stack:** Every piece runs locally on a laptop, deploys to Streamlit
-Cloud for free, and uses tools that are common in modern analytics-engineer
-workflows (dbt + a columnar warehouse + a BI surface). No cloud account
-required to reproduce.
+The application reads exclusively from the compiled DuckDB file. dbt does not
+run at serve time — the build is performed offline and the resulting database
+is shipped as a static artifact.
 
 ---
 
 ## Models
 
 **Sources (raw parquet):** `sites`, `towers`, `telemetry`, `deployments`,
-`incidents`, `components`, `inventory`
+`incidents`, `components`, `inventory`.
 
-**Staging** (one per source — type casts, soft renames):
-- `stg_sites`, `stg_towers`, `stg_telemetry`, `stg_deployments`,
-  `stg_incidents`, `stg_components`, `stg_inventory`
+**Staging** — one model per source, materialized as tables. Type casts and
+soft renames only; no business logic.
 
-**Marts:**
-- `dim_site` — sites enriched with tower counts and active counts
-- `dim_tower` — towers joined to site metadata + age in days
-- `fct_fleet_health_daily` — one row per (tower, day) with averaged telemetry,
-  uptime %, sensor health, and incident counts
-- `fct_deployment_status` — every deployment with duration in hours/days
-- `fct_component_reliability` — every component with observed hours and
-  actual-vs-target ratio for failed units
-- `fct_inventory_status` — current stock with computed `available`, reorder
-  flag, and a four-level `stock_status` (`critical` / `reorder` / `watch` /
-  `healthy`)
+| Model | Source |
+|---|---|
+| `stg_sites` | `sites.parquet` |
+| `stg_towers` | `towers.parquet` |
+| `stg_telemetry` | `telemetry.parquet` |
+| `stg_deployments` | `deployments.parquet` |
+| `stg_incidents` | `incidents.parquet` |
+| `stg_components` | `components.parquet` |
+| `stg_inventory` | `inventory.parquet` |
 
-**Tests:** 39 dbt tests covering uniqueness on every primary key,
-not-null on foreign keys, `accepted_values` on enum columns
-(`status`, `severity`, `component_type`, `stock_status`, `env`), and
-`relationships` from staging back to upstream dims. Source freshness is
-configured on the telemetry source in `sources.yml`.
+**Marts** — materialized as tables.
+
+| Model | Grain | Purpose |
+|---|---|---|
+| `dim_site` | one row per site | Sites enriched with active and total tower counts |
+| `dim_tower` | one row per tower | Towers joined to site metadata, age in days |
+| `fct_fleet_health_daily` | tower × day | Averaged telemetry, comms uptime %, sensor health, incidents opened |
+| `fct_deployment_status` | one row per deployment | Mission, site, duration in hours and days, status |
+| `fct_component_reliability` | one row per component | Observed hours, target MTBF, actual-vs-target ratio |
+| `fct_inventory_status` | one row per part number | Available stock, four-level `stock_status` (`critical` / `reorder` / `watch` / `healthy`) |
+
+**Tests** — 39 dbt tests covering uniqueness on every primary key, not-null on
+foreign keys, `accepted_values` on enum columns (`status`, `severity`,
+`component_type`, `stock_status`, `env`), and `relationships` from staging
+back to upstream dimensions. Source-level freshness is configured on
+telemetry in `dbt/models/staging/sources.yml`.
 
 ---
 
-## Run it locally
+## Local setup
 
 ```bash
-# 1. Create a virtualenv and install dev deps (includes dbt + numpy)
+# 1. Virtualenv with dev dependencies (includes dbt and numpy).
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
 
-# 2. Generate synthetic source data
+# 2. Generate the synthetic source data.
 python scripts/generate_data.py
 
-# 3. Build the dbt project (compiles to data/sentinel.duckdb)
+# 3. Build the dbt project. Produces data/sentinel.duckdb.
 cd dbt
 DBT_PROFILES_DIR=. dbt build
 cd ..
 
-# 4. Serve the Streamlit app
+# 4. Serve the Streamlit interface.
 streamlit run streamlit_app.py
 ```
 
-The runtime requirements (`requirements.txt`) only include what Streamlit Cloud
-needs to serve the app — no dbt at runtime, since the compiled DuckDB file is
-checked in.
+Runtime dependencies (`requirements.txt`) include only what the Streamlit
+process needs to serve the application: `streamlit`, `duckdb`, `pandas`, and
+`plotly`. The compiled DuckDB file and dbt run artifacts are shipped with
+the repository, so no build step runs in production.
+
+---
+
+## Repository layout
+
+```
+sentinel-fleet-ops/
+├── .streamlit/config.toml         # theme + runtime config
+├── data/
+│   ├── raw/                       # parquet sources
+│   └── sentinel.duckdb            # compiled marts (read-only at runtime)
+├── dbt/
+│   ├── dbt_project.yml
+│   ├── profiles.yml
+│   ├── models/
+│   │   ├── staging/               # one model per source + sources.yml + tests
+│   │   └── marts/                 # 6 marts + schema.yml tests
+│   └── target/                    # run_results.json + manifest.json (committed)
+├── scripts/
+│   └── generate_data.py           # deterministic synthetic generator
+├── streamlit_app.py               # interface entry point
+├── requirements.txt               # runtime
+└── requirements-dev.txt           # build (includes dbt)
+```
 
 ---
 
 ## Design notes
 
-- **Three personas, one fact layer.** Same `fct_fleet_health_daily` powers
-  both the Operations top-of-fold KPIs and the Reliability uptime trend.
-  Avoiding tab-specific tables keeps numbers consistent across views.
-- **Materialize staging as tables, not views.** Default for staging is `view`,
-  but views resolve `read_parquet(...)` paths at query time — which breaks the
-  moment the working directory of the consumer (Streamlit) differs from the
-  build directory (dbt). Materializing as tables bakes the data into the
-  compiled DuckDB file, so the artifact is fully self-contained.
-- **dbt artifacts in the app.** `run_results.json` and `manifest.json` are
-  committed alongside the DB. The Data Trust tab parses them and surfaces
-  pass/fail counts, elapsed time per step, and the last run timestamp — closing
-  the loop between "I built it" and "I can prove it works."
-- **Synthetic data is deterministic.** Fixed seed (`42`) so the dashboard looks
-  the same every time someone opens it. Tower-level bias terms keep the
-  telemetry from being homogeneous.
-- **Inventory `stock_status` over a single boolean.** A four-level state
-  (`critical`/`reorder`/`watch`/`healthy`) gives ops leads the prioritization
-  signal a single needs-reorder flag would hide.
+- **Single fact layer, multiple personas.** The same daily fleet-health fact
+  drives both the Operations top-line metrics and the Reliability uptime
+  trend. Numbers stay consistent across views without per-tab logic.
+- **Staging materialized as tables.** Streamlit reads from the compiled
+  DuckDB file with no working-directory assumptions; the application is fully
+  decoupled from the source parquet locations once the build completes.
+- **dbt artifacts surfaced in the interface.** `run_results.json` and
+  `manifest.json` ship alongside the database. The Pipeline Health view
+  parses them at runtime to display pass / fail counts, elapsed time, and the
+  build timestamp — closing the loop between the build job and the consumer.
+- **Stock status uses four levels rather than a single boolean.** Operations
+  leads need prioritization on what to act on first, not a flat list of
+  parts that are below threshold.
+- **Synthetic generator is deterministic.** Fixed seed produces a stable
+  dataset across runs, with per-tower bias terms so telemetry is not
+  homogeneous.
 
 ---
 
-## What's intentionally out of scope
+## Roadmap
 
-This is a one-afternoon demo, not a production system. Things I would build
-next, in priority order:
-
-1. **Real freshness alerting** — wire the `sources.yml` freshness rules into a
-   notification path (Slack webhook, PagerDuty) so stale telemetry escalates
-   automatically rather than waiting for someone to load the dashboard.
-2. **Streaming ingest path** — replace the parquet generator with a small Kafka
-   producer + ingestion job, so telemetry lands continuously rather than in
-   nightly batches. (This is the architecture I ran at KaHa Technologies for
-   2B+ events/month from a 10M-device wearable fleet.)
-3. **Component lifecycle forecasting** — extend `fct_component_reliability` to
-   predict expected-failure-windows per part using observed-vs-target ratios,
-   surfaced as a proactive replacement queue tied to inventory.
-4. **Site-level cohort analysis** — bucket sites by environment (`coastal`,
-   `desert`, `tundra`) and ship a comparative cohort view for failure
-   categories and uptime — useful when deciding what to harden in the next
-   hardware revision.
-5. **Auth + role-aware tabs** — tabs are filtered by role so ops leads see only
-   their sites and engineering sees the whole fleet.
-6. **End-to-end ERP/MRP integration** — replace the synthetic inventory source
-   with a connector to a real MRP system; reconcile on-hand vs. allocated
-   vs. requisitioned.
+1. **Source freshness alerting.** Connect the freshness rules in `sources.yml`
+   to a notification channel so stale telemetry escalates without requiring a
+   user to load the dashboard.
+2. **Streaming ingest path.** Replace the batch parquet generator with a Kafka
+   producer and an ingestion job, so telemetry lands continuously.
+3. **Component lifecycle forecasting.** Extend `fct_component_reliability` to
+   project failure windows from observed-vs-target ratios, surfaced as a
+   proactive replacement queue tied to inventory.
+4. **Site cohort analysis.** Group sites by environment (`coastal`, `desert`,
+   `tundra`, ...) and ship a comparative cohort view for failure categories
+   and uptime — useful when prioritizing hardware revisions.
+5. **Role-aware views.** Filter tabs by role so site leads see only their
+   sites and engineering retains the full-fleet view.
+6. **MRP integration.** Replace the synthetic inventory source with a
+   connector to a real MRP system; reconcile on-hand against allocated and
+   requisitioned quantities.
 
 ---
 
 ## License
 
-Personal / portfolio project. Synthetic data only.
+Personal project. Synthetic data only.
