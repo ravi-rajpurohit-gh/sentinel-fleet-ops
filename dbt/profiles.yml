@@ -1,0 +1,8 @@
+sentinel_fleet:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DBT_DUCKDB_PATH', '../data/sentinel.duckdb') }}"
+      threads: 4
+      external_root: "../data/raw"

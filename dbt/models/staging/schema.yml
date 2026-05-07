@@ -1,0 +1,69 @@
+version: 2
+
+models:
+  - name: stg_sites
+    columns:
+      - name: site_id
+        tests: [unique, not_null]
+      - name: env
+        tests:
+          - accepted_values:
+              values: ['coastal', 'desert', 'plains', 'forest', 'tundra']
+
+  - name: stg_towers
+    columns:
+      - name: tower_id
+        tests: [unique, not_null]
+      - name: site_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_sites')
+              field: site_id
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['active', 'maintenance', 'decommissioned']
+
+  - name: stg_telemetry
+    columns:
+      - name: tower_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_towers')
+              field: tower_id
+
+  - name: stg_deployments
+    columns:
+      - name: deployment_id
+        tests: [unique, not_null]
+      - name: tower_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_towers')
+              field: tower_id
+
+  - name: stg_incidents
+    columns:
+      - name: incident_id
+        tests: [unique, not_null]
+      - name: severity
+        tests:
+          - accepted_values:
+              values: ['P1', 'P2', 'P3', 'P4']
+
+  - name: stg_components
+    columns:
+      - name: component_id
+        tests: [unique, not_null]
+      - name: component_type
+        tests:
+          - accepted_values:
+              values: ['radar', 'eo_ir', 'comm', 'power', 'compute']
+
+  - name: stg_inventory
+    columns:
+      - name: part_number
+        tests: [unique, not_null]

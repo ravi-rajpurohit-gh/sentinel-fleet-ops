@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+dbt/logs/
+dbt/dbt_packages/
+dbt/.user.yml
+# Keep run_results.json + manifest.json so the Streamlit Data Trust tab can render
+# test results in the deployed app, but ignore the rest of target/.
+dbt/target/compiled/
+dbt/target/run/
+dbt/target/graph.gpickle
+dbt/target/graph_summary.json
+dbt/target/partial_parse.msgpack
+dbt/target/semantic_manifest.json
+.env

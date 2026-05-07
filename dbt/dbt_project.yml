@@ -1,0 +1,22 @@
+name: sentinel_fleet
+version: '0.1.0'
+config-version: 2
+
+profile: sentinel_fleet
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+clean-targets:
+  - target
+  - dbt_packages
+
+models:
+  sentinel_fleet:
+    # Materialize staging as tables (not views) so the compiled DuckDB file
+    # is self-contained — Streamlit reads from it without needing the source
+    # parquet files at runtime.
+    staging:
+      +materialized: table
+    marts:
+      +materialized: table

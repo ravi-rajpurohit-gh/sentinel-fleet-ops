@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: dim_site
+    columns:
+      - name: site_id
+        tests: [unique, not_null]
+
+  - name: dim_tower
+    columns:
+      - name: tower_id
+        tests: [unique, not_null]
+      - name: site_id
+        tests:
+          - relationships:
+              to: ref('dim_site')
+              field: site_id
+
+  - name: fct_fleet_health_daily
+    columns:
+      - name: tower_id
+        tests: [not_null]
+      - name: health_date
+        tests: [not_null]
+      - name: comms_uptime_pct
+        tests: [not_null]
+
+  - name: fct_deployment_status
+    columns:
+      - name: deployment_id
+        tests: [unique, not_null]
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['active', 'completed']
+
+  - name: fct_component_reliability
+    columns:
+      - name: component_id
+        tests: [unique, not_null]
+      - name: component_type
+        tests: [not_null]
+
+  - name: fct_inventory_status
+    columns:
+      - name: part_number
+        tests: [unique, not_null]
+      - name: stock_status
+        tests:
+          - accepted_values:
+              values: ['critical', 'reorder', 'watch', 'healthy']

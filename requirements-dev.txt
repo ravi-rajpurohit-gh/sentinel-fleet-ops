@@ -1,0 +1,5 @@
+-r requirements.txt
+numpy
+pyarrow
+dbt-core==1.10.20
+dbt-duckdb==1.10.0
