@@ -1,0 +1,25 @@
+name: Keep Streamlit App Alive
+
+on:
+  schedule:
+    # Runs twice daily at 08:00 and 20:00 UTC to prevent Streamlit Community Cloud sleep
+    - cron: '0 8 * * *'
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping Streamlit App
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping sentinel-fleet-ops.streamlit.app
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://sentinel-fleet-ops.streamlit.app/)
+          echo "HTTP status: $STATUS"
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
+            echo "Unexpected status code: $STATUS"
+            exit 1
+          fi
+          echo "App is alive."
