@@ -1,6 +1,6 @@
-"""Sentinel Fleet Operations — operational telemetry, reliability, and pipeline
-status for the autonomous sensor tower fleet. Reads from a precompiled DuckDB
-file produced by the dbt build step."""
+"""Sentinel Mission Analytics — detection intelligence, fleet sustainment, and
+pipeline telemetry for the Sentry autonomous surveillance network. Reads from a
+precompiled DuckDB file produced by the dbt build step."""
 from __future__ import annotations
 
 import json
@@ -96,7 +96,7 @@ def style_chart(fig, *, height: int | None = None, show_legend: bool = True):
 # App config + custom CSS
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Sentinel Fleet Operations",
+    page_title="Sentinel · Mission Analytics",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -316,9 +316,9 @@ last_refresh_str = pd.Timestamp(last_telemetry_ts).strftime("%Y-%m-%d %H:%M UTC"
 header_html = f"""
 <div class="sfo-header">
   <div>
-    <div class="sfo-title">Sentinel · Fleet Operations</div>
-    <div class="sfo-name">Sentinel Fleet Operations</div>
-    <div class="sfo-tag">Operational telemetry, reliability, and pipeline status for the autonomous sensor fleet.</div>
+    <div class="sfo-title">Sentinel · Mission Analytics</div>
+    <div class="sfo-name">Sentinel Mission Analytics</div>
+    <div class="sfo-tag">Detection intelligence, fleet sustainment, and pipeline telemetry for the Sentry autonomous surveillance network.</div>
   </div>
   <div style="text-align:right">
     <div class="sfo-status-pill sfo-status-{status_kind}">
@@ -377,25 +377,26 @@ kpi = q(f"""
 """).iloc[0]
 
 c1, c2, c3, c4, c5, c6 = st.columns(6)
-c1.metric("Active towers", int(kpi.active_towers))
-c2.metric("Active deployments", int(kpi.active_deployments))
-c3.metric("Open incidents", int(kpi.open_incidents))
-c4.metric("Critical · P1 + P2", int(kpi.critical_open))
+c1.metric("Active Sentry Towers", int(kpi.active_towers))
+c2.metric("Active Patrol Missions", int(kpi.active_deployments))
+c3.metric("Open Incidents", int(kpi.open_incidents))
+c4.metric("Critical Alerts · P1+P2", int(kpi.critical_open))
 c5.metric(
-    "Comms uptime · 7 days",
+    "Network Uptime · 7d",
     f"{kpi.uptime_7d:.1f}%" if pd.notna(kpi.uptime_7d) else "—",
 )
-c6.metric("Component failures · 30 days", int(kpi.failed_components_30d))
+c6.metric("Sensor Failures · 30d", int(kpi.failed_components_30d))
 
 
 tab_ops, tab_rel, tab_pipeline = st.tabs(["Operations", "Reliability", "Pipeline Health"])
+# Detection Analytics tab is added after Phase 3 data layer is complete
 
 
 # ---------------------------------------------------------------------------
 # OPERATIONS
 # ---------------------------------------------------------------------------
 with tab_ops:
-    st.markdown("## Site distribution")
+    st.markdown("## Sentry Deployment Map")
 
     site_status = q(f"""
         select s.site_name, s.site_id, s.region, s.env,
@@ -416,6 +417,8 @@ with tab_ops:
             hover_name="site_name",
             hover_data={"region": True, "env": True, "tower_count": True,
                         "active_tower_count": True, "lat": False, "lng": False},
+            labels={"region": "Region", "env": "Terrain", "tower_count": "Towers",
+                    "active_tower_count": "Active"},
             color_continuous_scale=[[0, PALETTE["tan"]],
                                     [0.5, PALETTE["amber"]],
                                     [1, PALETTE["amber_l"]]],
@@ -452,20 +455,20 @@ with tab_ops:
         display = site_status[["site_name", "region", "env",
                                "tower_count", "active_tower_count",
                                "maintenance_tower_count"]].copy()
-        display.columns = ["Site", "Region", "Environment",
+        display.columns = ["Site", "Region", "Terrain",
                            "Towers", "Active", "Maintenance"]
         st.dataframe(display, hide_index=True, width="stretch", height=480)
 
     col_a, col_b = st.columns(2, gap="large")
     with col_a:
-        st.markdown("## Active deployments")
+        st.markdown("## Active Patrol Missions")
         active_deps = q(f"""
             select
                 mission_name  as "Mission",
-                tower_id      as "Tower",
+                tower_id      as "Tower ID",
                 site_name     as "Site",
-                start_ts      as "Started",
-                duration_days as "Days deployed"
+                start_ts      as "Deployed",
+                duration_days as "Days On Station"
             from fct_deployment_status
             where status = 'active' {site_filter_clause}
             order by start_ts desc
@@ -481,17 +484,17 @@ with tab_ops:
             st.dataframe(active_deps, hide_index=True, width="stretch", height=360)
 
     with col_b:
-        st.markdown("## Open incidents")
+        st.markdown("## Open Incidents")
         open_inc = q(f"""
             select
-                i.incident_id as "Incident",
-                i.severity    as "Severity",
-                i.category    as "Category",
-                i.tower_id    as "Tower",
+                i.incident_id as "Incident ID",
+                i.severity    as "Sev",
+                i.category    as "Subsystem",
+                i.tower_id    as "Tower ID",
                 t.site_name   as "Site",
                 i.opened_at   as "Opened",
-                date_diff('hour', i.opened_at, current_timestamp) as "Age (hours)",
-                i.root_cause  as "Root cause"
+                date_diff('hour', i.opened_at, current_timestamp) as "Age (hrs)",
+                i.root_cause  as "Root Cause"
             from stg_incidents i
             join dim_tower t using (tower_id)
             where i.closed_at is null {site_filter_clause}
@@ -509,18 +512,18 @@ with tab_ops:
         else:
             st.dataframe(open_inc, hide_index=True, width="stretch", height=360)
 
-    st.markdown("## Inventory below reorder threshold")
+    st.markdown("## Parts at Resupply Threshold")
     low_inv = q("""
         select
-            part_number    as "Part number",
-            description    as "Description",
-            category       as "Category",
-            on_hand        as "On hand",
+            part_number    as "Part Number",
+            description    as "Component",
+            category       as "Subsystem",
+            on_hand        as "On Hand",
             allocated      as "Allocated",
             available      as "Available",
-            reorder_point  as "Reorder point",
-            stock_status   as "Status",
-            lead_time_days as "Lead time (days)"
+            reorder_point  as "Reorder Point",
+            stock_status   as "Stock Status",
+            lead_time_days as "Lead Time (days)"
         from fct_inventory_status
         where stock_status in ('critical', 'reorder', 'watch')
         order by case stock_status when 'critical' then 1 when 'reorder' then 2 else 3 end,
@@ -540,7 +543,7 @@ with tab_ops:
 # RELIABILITY
 # ---------------------------------------------------------------------------
 with tab_rel:
-    st.markdown("## Component MTBF · target vs observed")
+    st.markdown("## Sensor Subsystem MTBF · Target vs Observed")
 
     mtbf = q(f"""
         select
@@ -581,13 +584,13 @@ with tab_rel:
         st.plotly_chart(fig, width="stretch")
     with col_r:
         display = mtbf.copy()
-        display.columns = ["Component", "Target hours", "Observed hours",
-                           "Installed", "Failed", "Failure rate (%)"]
-        display["Target hours"] = display["Target hours"].round(0).astype(int)
-        display["Observed hours"] = display["Observed hours"].round(0)
+        display.columns = ["Subsystem", "Target MTBF (hrs)", "Observed at Failure (hrs)",
+                           "Units Deployed", "Failures", "Failure Rate (%)"]
+        display["Target MTBF (hrs)"] = display["Target MTBF (hrs)"].round(0).astype(int)
+        display["Observed at Failure (hrs)"] = display["Observed at Failure (hrs)"].round(0)
         st.dataframe(display, hide_index=True, width="stretch", height=360)
 
-    st.markdown("## Comms uptime and sensor health · daily")
+    st.markdown("## Network Uptime & Sensor Health · 30-Day Trend")
     uptime = q(f"""
         select health_date,
                avg(comms_uptime_pct) as uptime_pct,
@@ -620,7 +623,7 @@ with tab_rel:
 
     col_a, col_b = st.columns(2, gap="large")
     with col_a:
-        st.markdown("## Incidents by category · last 30 days")
+        st.markdown("## Failures by Subsystem · Last 30 Days")
         inc_cat = q(f"""
             select i.category as Category, i.severity as Severity, count(*) as Count
             from stg_incidents i
@@ -647,9 +650,9 @@ with tab_rel:
             )
 
     with col_b:
-        st.markdown("## Top root causes")
+        st.markdown("## Top Failure Signatures")
         top_rc = q(f"""
-            select i.root_cause as "Root cause", i.category as "Category",
+            select i.root_cause as "Root Cause", i.category as "Subsystem",
                    count(*) as "Incidents"
             from stg_incidents i
             join dim_tower t using (tower_id)
@@ -665,7 +668,7 @@ with tab_rel:
 # PIPELINE HEALTH
 # ---------------------------------------------------------------------------
 with tab_pipeline:
-    st.markdown("## Latest build")
+    st.markdown("## Analytics Pipeline · Latest Build")
 
     rr = load_run_results()
     if not rr:
@@ -701,7 +704,7 @@ with tab_pipeline:
             })
         rdf = pd.DataFrame(rows)
 
-        st.markdown("## Steps by kind")
+        st.markdown("## Steps by Kind")
         agg = (
             rdf.groupby("kind")
                .agg(steps=("name", "count"),
@@ -715,11 +718,11 @@ with tab_pipeline:
         agg.columns = ["Kind", "Steps", "Passed", "Failed", "Average elapsed (seconds)"]
         st.dataframe(agg, hide_index=True, width="stretch")
 
-        st.markdown("## Step detail")
+        st.markdown("## Step Detail")
         rdf.columns = ["Kind", "Name", "Status", "Elapsed (seconds)"]
         st.dataframe(rdf, hide_index=True, width="stretch", height=420)
 
-    st.markdown("## Source freshness")
+    st.markdown("## Source Freshness")
     freshness = q("""
         with sources as (
             select 'telemetry'   as source, max(ts)           as last_ts from stg_telemetry
@@ -738,9 +741,10 @@ with tab_pipeline:
     """)
     st.dataframe(freshness, hide_index=True, width="stretch")
     st.caption(
-        "Freshness is the age of the most recent record per source against wall-clock now. "
-        "Source-level thresholds are configured in dbt sources.yml; warnings escalate when the "
-        "lag exceeds the configured window."
+        "Freshness measures the age of the most recent record per source against wall-clock now. "
+        "Source-level warn/error thresholds are configured in dbt sources.yml. A stale telemetry "
+        "feed or detection stream degrades situational awareness — this view surfaces lag before "
+        "it affects operational decisions."
     )
 
 
@@ -760,7 +764,7 @@ if gen_at:
 build_segment = f"BUILD {gen_time}" if gen_time else "BUILD UNAVAILABLE"
 st.markdown(
     f'<div class="sfo-footer">'
-    f'<span>SENTINEL FLEET OPERATIONS  ·  {site_label.upper()}</span>'
+    f'<span>SENTINEL MISSION ANALYTICS  ·  {site_label.upper()}</span>'
     f'<span>{build_segment}</span>'
     f'</div>',
     unsafe_allow_html=True,
