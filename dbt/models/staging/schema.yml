@@ -67,3 +67,26 @@ models:
     columns:
       - name: part_number
         tests: [unique, not_null]
+
+  - name: stg_detections
+    columns:
+      - name: detection_id
+        tests: [unique, not_null]
+      - name: tower_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_towers')
+              field: tower_id
+      - name: confidence_score
+        tests: [not_null]
+      - name: target_class
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['human', 'vehicle', 'UAS', 'unknown']
+
+  - name: stg_alert_pipeline
+    columns:
+      - name: detection_id
+        tests: [unique, not_null]

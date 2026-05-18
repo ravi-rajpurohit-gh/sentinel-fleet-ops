@@ -1,1 +1,1548 @@
-{"metadata": {"dbt_schema_version": "https://schemas.getdbt.com/dbt/run-results/v6.json", "dbt_version": "1.10.20", "generated_at": "2026-05-07T21:07:12.918476Z", "invocation_id": "d7b532a9-5aee-4501-89c5-6218e9899181", "invocation_started_at": "2026-05-07T21:07:11.522068Z", "env": {}}, "results": [{"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.306789Z", "completed_at": "2026-05-07T21:07:12.327860Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.329955Z", "completed_at": "2026-05-07T21:07:12.401774Z"}], "thread_id": "Thread-4", "execution_time": 0.1017601490020752, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.stg_inventory", "compiled": true, "compiled_code": "select\n    part_number,\n    description,\n    category,\n    on_hand,\n    in_transit,\n    allocated,\n    reorder_point,\n    lead_time_days,\n    cast(last_updated as timestamp) as last_updated\nfrom read_parquet('../data/raw/inventory.parquet')", "relation_name": "\"sentinel\".\"main\".\"stg_inventory\"", "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.304784Z", "completed_at": "2026-05-07T21:07:12.308941Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.309357Z", "completed_at": "2026-05-07T21:07:12.403568Z"}], "thread_id": "Thread-2", "execution_time": 0.10522198677062988, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.stg_deployments", "compiled": true, "compiled_code": "select\n    deployment_id,\n    tower_id,\n    mission_name,\n    cast(start_ts as timestamp) as start_ts,\n    cast(end_ts as timestamp) as end_ts,\n    status\nfrom read_parquet('../data/raw/deployments.parquet')", "relation_name": "\"sentinel\".\"main\".\"stg_deployments\"", "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.305779Z", "completed_at": "2026-05-07T21:07:12.327683Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.328111Z", "completed_at": "2026-05-07T21:07:12.404338Z"}], "thread_id": "Thread-3", "execution_time": 0.10509681701660156, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.stg_incidents", "compiled": true, "compiled_code": "select\n    incident_id,\n    tower_id,\n    cast(opened_at as timestamp) as opened_at,\n    cast(closed_at as timestamp) as closed_at,\n    severity,\n    category,\n    root_cause\nfrom read_parquet('../data/raw/incidents.parquet')", "relation_name": "\"sentinel\".\"main\".\"stg_incidents\"", "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.301065Z", "completed_at": "2026-05-07T21:07:12.309169Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.325735Z", "completed_at": "2026-05-07T21:07:12.404864Z"}], "thread_id": "Thread-1", "execution_time": 0.10588216781616211, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.stg_components", "compiled": true, "compiled_code": "select\n    component_id,\n    tower_id,\n    component_type,\n    part_number,\n    cast(installed_at as timestamp) as installed_at,\n    cast(failed_at as timestamp) as failed_at,\n    mtbf_target_hours,\n    is_failed\nfrom read_parquet('../data/raw/components.parquet')", "relation_name": "\"sentinel\".\"main\".\"stg_components\"", "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.414379Z", "completed_at": "2026-05-07T21:07:12.430200Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.432048Z", "completed_at": "2026-05-07T21:07:12.449511Z"}], "thread_id": "Thread-1", "execution_time": 0.041153669357299805, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_stg_inventory_part_number.9e6dfa231e", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect part_number\nfrom \"sentinel\".\"main\".\"stg_inventory\"\nwhere part_number is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.413513Z", "completed_at": "2026-05-07T21:07:12.425956Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.426360Z", "completed_at": "2026-05-07T21:07:12.484127Z"}], "thread_id": "Thread-3", "execution_time": 0.07536697387695312, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.stg_towers", "compiled": true, "compiled_code": "select\n    tower_id,\n    model,\n    firmware_version,\n    site_id,\n    cast(deploy_date as date) as deploy_date,\n    status\nfrom read_parquet('../data/raw/towers.parquet')", "relation_name": "\"sentinel\".\"main\".\"stg_towers\"", "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.411470Z", "completed_at": "2026-05-07T21:07:12.426193Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.428234Z", "completed_at": "2026-05-07T21:07:12.486515Z"}], "thread_id": "Thread-4", "execution_time": 0.07730793952941895, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.stg_sites", "compiled": true, "compiled_code": "select\n    site_id,\n    site_name,\n    region,\n    env,\n    lat,\n    lng,\n    cast(commissioned_date as date) as commissioned_date\nfrom read_parquet('../data/raw/sites.parquet')", "relation_name": "\"sentinel\".\"main\".\"stg_sites\"", "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.467123Z", "completed_at": "2026-05-07T21:07:12.475660Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.476255Z", "completed_at": "2026-05-07T21:07:12.492239Z"}], "thread_id": "Thread-1", "execution_time": 0.03911089897155762, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_stg_inventory_part_number.a3c5464ce0", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    part_number as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_inventory\"\nwhere part_number is not null\ngroup by part_number\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.412589Z", "completed_at": "2026-05-07T21:07:12.430026Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.430390Z", "completed_at": "2026-05-07T21:07:12.504651Z"}], "thread_id": "Thread-2", "execution_time": 0.09502506256103516, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.stg_telemetry", "compiled": true, "compiled_code": "select\n    tower_id,\n    cast(ts as timestamp) as ts,\n    cpu_pct,\n    mem_pct,\n    sensor_health_score,\n    comms_uptime_min,\n    power_watts,\n    ambient_temp_c\nfrom read_parquet('../data/raw/telemetry.parquet')", "relation_name": "\"sentinel\".\"main\".\"stg_telemetry\"", "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.492692Z", "completed_at": "2026-05-07T21:07:12.499655Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.500095Z", "completed_at": "2026-05-07T21:07:12.516623Z"}], "thread_id": "Thread-3", "execution_time": 0.02660202980041504, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_stg_deployments_deployment_id.00725e9d3e", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect deployment_id\nfrom \"sentinel\".\"main\".\"stg_deployments\"\nwhere deployment_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.496279Z", "completed_at": "2026-05-07T21:07:12.502139Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.502744Z", "completed_at": "2026-05-07T21:07:12.518255Z"}], "thread_id": "Thread-4", "execution_time": 0.02877521514892578, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_stg_deployments_tower_id.6bd1704a3e", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect tower_id\nfrom \"sentinel\".\"main\".\"stg_deployments\"\nwhere tower_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.506268Z", "completed_at": "2026-05-07T21:07:12.509882Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.510559Z", "completed_at": "2026-05-07T21:07:12.550857Z"}], "thread_id": "Thread-1", "execution_time": 0.04885697364807129, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_stg_deployments_deployment_id.6f02c93981", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    deployment_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_deployments\"\nwhere deployment_id is not null\ngroup by deployment_id\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.511947Z", "completed_at": "2026-05-07T21:07:12.518812Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.519540Z", "completed_at": "2026-05-07T21:07:12.556457Z"}], "thread_id": "Thread-2", "execution_time": 0.049101829528808594, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.accepted_values_stg_incidents_severity__P1__P2__P3__P4.1173774d80", "compiled": true, "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        severity as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"stg_incidents\"\n    group by severity\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'P1','P2','P3','P4'\n)\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.522933Z", "completed_at": "2026-05-07T21:07:12.551055Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.551690Z", "completed_at": "2026-05-07T21:07:12.564566Z"}], "thread_id": "Thread-3", "execution_time": 0.04783987998962402, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_stg_incidents_incident_id.67da999de2", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect incident_id\nfrom \"sentinel\".\"main\".\"stg_incidents\"\nwhere incident_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.525898Z", "completed_at": "2026-05-07T21:07:12.553544Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.554080Z", "completed_at": "2026-05-07T21:07:12.568078Z"}], "thread_id": "Thread-4", "execution_time": 0.04673409461975098, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_stg_incidents_incident_id.f54b010c23", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    incident_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_incidents\"\nwhere incident_id is not null\ngroup by incident_id\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.559715Z", "completed_at": "2026-05-07T21:07:12.567287Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.568231Z", "completed_at": "2026-05-07T21:07:12.585458Z"}], "thread_id": "Thread-1", "execution_time": 0.029476165771484375, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.accepted_values_stg_components_component_type__radar__eo_ir__comm__power__compute.b4e2e3ec32", "compiled": true, "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        component_type as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"stg_components\"\n    group by component_type\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'radar','eo_ir','comm','power','compute'\n)\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.565243Z", "completed_at": "2026-05-07T21:07:12.569919Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.570494Z", "completed_at": "2026-05-07T21:07:12.587223Z"}], "thread_id": "Thread-2", "execution_time": 0.025578022003173828, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_stg_components_component_id.f2f80ed648", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect component_id\nfrom \"sentinel\".\"main\".\"stg_components\"\nwhere component_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.573238Z", "completed_at": "2026-05-07T21:07:12.579516Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.580026Z", "completed_at": "2026-05-07T21:07:12.590199Z"}], "thread_id": "Thread-3", "execution_time": 0.02180624008178711, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_stg_components_component_id.a76c6cf67a", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    component_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_components\"\nwhere component_id is not null\ngroup by component_id\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.576445Z", "completed_at": "2026-05-07T21:07:12.581608Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.582014Z", "completed_at": "2026-05-07T21:07:12.594981Z"}], "thread_id": "Thread-4", "execution_time": 0.022876739501953125, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.accepted_values_stg_towers_status__active__maintenance__decommissioned.0d4d6580c0", "compiled": true, "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        status as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"stg_towers\"\n    group by status\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'active','maintenance','decommissioned'\n)\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.592319Z", "completed_at": "2026-05-07T21:07:12.598688Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.599323Z", "completed_at": "2026-05-07T21:07:12.614322Z"}], "thread_id": "Thread-1", "execution_time": 0.025453805923461914, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_stg_towers_site_id.859351a27b", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect site_id\nfrom \"sentinel\".\"main\".\"stg_towers\"\nwhere site_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.596356Z", "completed_at": "2026-05-07T21:07:12.601718Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.605589Z", "completed_at": "2026-05-07T21:07:12.615994Z"}], "thread_id": "Thread-2", "execution_time": 0.023239850997924805, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_stg_towers_tower_id.0db6e2bbb9", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect tower_id\nfrom \"sentinel\".\"main\".\"stg_towers\"\nwhere tower_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.601889Z", "completed_at": "2026-05-07T21:07:12.609597Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.610122Z", "completed_at": "2026-05-07T21:07:12.626856Z"}], "thread_id": "Thread-3", "execution_time": 0.029696941375732422, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.relationships_stg_deployments_tower_id__tower_id__ref_stg_towers_.98edca6058", "compiled": true, "compiled_code": "\n    \n    \n\nwith child as (\n    select tower_id as from_field\n    from \"sentinel\".\"main\".\"stg_deployments\"\n    where tower_id is not null\n),\n\nparent as (\n    select tower_id as to_field\n    from \"sentinel\".\"main\".\"stg_towers\"\n)\n\nselect\n    from_field\n\nfrom child\nleft join parent\n    on child.from_field = parent.to_field\n\nwhere parent.to_field is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.607610Z", "completed_at": "2026-05-07T21:07:12.612354Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.612724Z", "completed_at": "2026-05-07T21:07:12.627837Z"}], "thread_id": "Thread-4", "execution_time": 0.023468971252441406, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_stg_towers_tower_id.c5c968d552", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    tower_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_towers\"\nwhere tower_id is not null\ngroup by tower_id\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.620213Z", "completed_at": "2026-05-07T21:07:12.628371Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.628962Z", "completed_at": "2026-05-07T21:07:12.640604Z"}], "thread_id": "Thread-1", "execution_time": 0.02287602424621582, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.accepted_values_stg_sites_env__coastal__desert__plains__forest__tundra.f498a279b4", "compiled": true, "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        env as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"stg_sites\"\n    group by env\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'coastal','desert','plains','forest','tundra'\n)\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.623989Z", "completed_at": "2026-05-07T21:07:12.630619Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.631221Z", "completed_at": "2026-05-07T21:07:12.641447Z"}], "thread_id": "Thread-2", "execution_time": 0.019195079803466797, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_stg_sites_site_id.eef7c1f61c", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect site_id\nfrom \"sentinel\".\"main\".\"stg_sites\"\nwhere site_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.634076Z", "completed_at": "2026-05-07T21:07:12.644422Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.645933Z", "completed_at": "2026-05-07T21:07:12.659888Z"}], "thread_id": "Thread-3", "execution_time": 0.028712034225463867, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.relationships_stg_towers_site_id__site_id__ref_stg_sites_.432e005147", "compiled": true, "compiled_code": "\n    \n    \n\nwith child as (\n    select site_id as from_field\n    from \"sentinel\".\"main\".\"stg_towers\"\n    where site_id is not null\n),\n\nparent as (\n    select site_id as to_field\n    from \"sentinel\".\"main\".\"stg_sites\"\n)\n\nselect\n    from_field\n\nfrom child\nleft join parent\n    on child.from_field = parent.to_field\n\nwhere parent.to_field is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.647069Z", "completed_at": "2026-05-07T21:07:12.652501Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.653045Z", "completed_at": "2026-05-07T21:07:12.662695Z"}], "thread_id": "Thread-2", "execution_time": 0.021072864532470703, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_stg_telemetry_tower_id.407daff1f9", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect tower_id\nfrom \"sentinel\".\"main\".\"stg_telemetry\"\nwhere tower_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.636918Z", "completed_at": "2026-05-07T21:07:12.654281Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.656255Z", "completed_at": "2026-05-07T21:07:12.666341Z"}], "thread_id": "Thread-4", "execution_time": 0.03630709648132324, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_stg_sites_site_id.ecfc957304", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    site_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_sites\"\nwhere site_id is not null\ngroup by site_id\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.667090Z", "completed_at": "2026-05-07T21:07:12.672239Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.672939Z", "completed_at": "2026-05-07T21:07:12.690146Z"}], "thread_id": "Thread-3", "execution_time": 0.026967763900756836, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.relationships_stg_telemetry_tower_id__tower_id__ref_stg_towers_.86e501926e", "compiled": true, "compiled_code": "\n    \n    \n\nwith child as (\n    select tower_id as from_field\n    from \"sentinel\".\"main\".\"stg_telemetry\"\n    where tower_id is not null\n),\n\nparent as (\n    select tower_id as to_field\n    from \"sentinel\".\"main\".\"stg_towers\"\n)\n\nselect\n    from_field\n\nfrom child\nleft join parent\n    on child.from_field = parent.to_field\n\nwhere parent.to_field is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.644592Z", "completed_at": "2026-05-07T21:07:12.652671Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.654444Z", "completed_at": "2026-05-07T21:07:12.691483Z"}], "thread_id": "Thread-1", "execution_time": 0.04838991165161133, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.fct_inventory_status", "compiled": true, "compiled_code": "with inventory as (select * from \"sentinel\".\"main\".\"stg_inventory\")\n\nselect\n    part_number,\n    description,\n    category,\n    on_hand,\n    in_transit,\n    allocated,\n    on_hand - allocated as available,\n    reorder_point,\n    case\n        when (on_hand - allocated) < reorder_point then true\n        else false\n    end as needs_reorder,\n    case\n        when (on_hand - allocated) <= 0 then 'critical'\n        when (on_hand - allocated) < reorder_point then 'reorder'\n        when (on_hand - allocated) < reorder_point * 1.5 then 'watch'\n        else 'healthy'\n    end as stock_status,\n    lead_time_days,\n    last_updated\nfrom inventory", "relation_name": "\"sentinel\".\"main\".\"fct_inventory_status\"", "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.699490Z", "completed_at": "2026-05-07T21:07:12.703958Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.704622Z", "completed_at": "2026-05-07T21:07:12.722124Z"}], "thread_id": "Thread-1", "execution_time": 0.029896020889282227, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_fct_inventory_status_part_number.6463e2883c", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect part_number\nfrom \"sentinel\".\"main\".\"fct_inventory_status\"\nwhere part_number is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.696242Z", "completed_at": "2026-05-07T21:07:12.704130Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.705887Z", "completed_at": "2026-05-07T21:07:12.722848Z"}], "thread_id": "Thread-3", "execution_time": 0.031080007553100586, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.accepted_values_fct_inventory_status_stock_status__critical__reorder__watch__healthy.7b52f6e048", "compiled": true, "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        stock_status as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"fct_inventory_status\"\n    group by stock_status\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'critical','reorder','watch','healthy'\n)\n\n\n", "relation_name": null, "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.676605Z", "completed_at": "2026-05-07T21:07:12.681512Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.683735Z", "completed_at": "2026-05-07T21:07:12.725992Z"}], "thread_id": "Thread-2", "execution_time": 0.05434608459472656, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.dim_site", "compiled": true, "compiled_code": "with sites as (select * from \"sentinel\".\"main\".\"stg_sites\"),\ntowers as (select * from \"sentinel\".\"main\".\"stg_towers\"),\n\ntower_counts as (\n    select\n        site_id,\n        count(*) as tower_count,\n        sum(case when status = 'active' then 1 else 0 end) as active_tower_count,\n        sum(case when status = 'maintenance' then 1 else 0 end) as maintenance_tower_count\n    from towers\n    group by site_id\n)\n\nselect\n    s.site_id,\n    s.site_name,\n    s.region,\n    s.env,\n    s.lat,\n    s.lng,\n    s.commissioned_date,\n    coalesce(tc.tower_count, 0) as tower_count,\n    coalesce(tc.active_tower_count, 0) as active_tower_count,\n    coalesce(tc.maintenance_tower_count, 0) as maintenance_tower_count\nfrom sites s\nleft join tower_counts tc on tc.site_id = s.site_id", "relation_name": "\"sentinel\".\"main\".\"dim_site\"", "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.677899Z", "completed_at": "2026-05-07T21:07:12.681360Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.681863Z", "completed_at": "2026-05-07T21:07:12.727429Z"}], "thread_id": "Thread-4", "execution_time": 0.05564308166503906, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.dim_tower", "compiled": true, "compiled_code": "with towers as (select * from \"sentinel\".\"main\".\"stg_towers\"),\nsites as (select * from \"sentinel\".\"main\".\"stg_sites\")\n\nselect\n    t.tower_id,\n    t.model,\n    t.firmware_version,\n    t.status,\n    t.deploy_date,\n    date_diff('day', t.deploy_date, current_date) as age_days,\n    s.site_id,\n    s.site_name,\n    s.region,\n    s.env\nfrom towers t\nleft join sites s on s.site_id = t.site_id", "relation_name": "\"sentinel\".\"main\".\"dim_tower\"", "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.734128Z", "completed_at": "2026-05-07T21:07:12.741615Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.741825Z", "completed_at": "2026-05-07T21:07:12.750389Z"}], "thread_id": "Thread-3", "execution_time": 0.0202789306640625, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_dim_site_site_id.a04310e160", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect site_id\nfrom \"sentinel\".\"main\".\"dim_site\"\nwhere site_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.731062Z", "completed_at": "2026-05-07T21:07:12.740178Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.740424Z", "completed_at": "2026-05-07T21:07:12.751127Z"}], "thread_id": "Thread-1", "execution_time": 0.024199962615966797, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_fct_inventory_status_part_number.26daacb0cc", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    part_number as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"fct_inventory_status\"\nwhere part_number is not null\ngroup by part_number\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.736036Z", "completed_at": "2026-05-07T21:07:12.742988Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.743157Z", "completed_at": "2026-05-07T21:07:12.752999Z"}], "thread_id": "Thread-2", "execution_time": 0.022190093994140625, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_dim_site_site_id.b319cae483", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    site_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"dim_site\"\nwhere site_id is not null\ngroup by site_id\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.737697Z", "completed_at": "2026-05-07T21:07:12.745869Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.746347Z", "completed_at": "2026-05-07T21:07:12.757680Z"}], "thread_id": "Thread-4", "execution_time": 0.029415130615234375, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_dim_tower_tower_id.7e853b8849", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect tower_id\nfrom \"sentinel\".\"main\".\"dim_tower\"\nwhere tower_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.758007Z", "completed_at": "2026-05-07T21:07:12.765539Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.766936Z", "completed_at": "2026-05-07T21:07:12.773857Z"}], "thread_id": "Thread-3", "execution_time": 0.018841981887817383, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.relationships_dim_tower_site_id__site_id__ref_dim_site_.5ec79eeebc", "compiled": true, "compiled_code": "\n    \n    \n\nwith child as (\n    select site_id as from_field\n    from \"sentinel\".\"main\".\"dim_tower\"\n    where site_id is not null\n),\n\nparent as (\n    select site_id as to_field\n    from \"sentinel\".\"main\".\"dim_site\"\n)\n\nselect\n    from_field\n\nfrom child\nleft join parent\n    on child.from_field = parent.to_field\n\nwhere parent.to_field is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.760168Z", "completed_at": "2026-05-07T21:07:12.765371Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.765695Z", "completed_at": "2026-05-07T21:07:12.774395Z"}], "thread_id": "Thread-1", "execution_time": 0.018754959106445312, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_dim_tower_tower_id.e99285f303", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    tower_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"dim_tower\"\nwhere tower_id is not null\ngroup by tower_id\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.778510Z", "completed_at": "2026-05-07T21:07:12.783045Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.783218Z", "completed_at": "2026-05-07T21:07:12.816587Z"}], "thread_id": "Thread-2", "execution_time": 0.0400848388671875, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.fct_component_reliability", "compiled": true, "compiled_code": "with components as (select * from \"sentinel\".\"main\".\"stg_components\"),\ntowers as (select * from \"sentinel\".\"main\".\"dim_tower\")\n\nselect\n    c.component_id,\n    c.tower_id,\n    t.site_id,\n    t.site_name,\n    t.region,\n    t.model as tower_model,\n    c.component_type,\n    c.part_number,\n    c.installed_at,\n    c.failed_at,\n    c.is_failed,\n    c.mtbf_target_hours,\n    case\n        when c.failed_at is not null\n            then date_diff('hour', c.installed_at, c.failed_at)\n        else date_diff('hour', c.installed_at, current_timestamp)\n    end as observed_hours,\n    case\n        when c.failed_at is not null\n            then round(date_diff('hour', c.installed_at, c.failed_at) * 1.0 / c.mtbf_target_hours, 3)\n        else null\n    end as actual_vs_target_ratio\nfrom components c\nleft join towers t on t.tower_id = c.tower_id", "relation_name": "\"sentinel\".\"main\".\"fct_component_reliability\"", "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.780144Z", "completed_at": "2026-05-07T21:07:12.784886Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.785207Z", "completed_at": "2026-05-07T21:07:12.817252Z"}], "thread_id": "Thread-4", "execution_time": 0.039958953857421875, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.fct_deployment_status", "compiled": true, "compiled_code": "with deployments as (select * from \"sentinel\".\"main\".\"stg_deployments\"),\ntowers as (select * from \"sentinel\".\"main\".\"dim_tower\")\n\nselect\n    d.deployment_id,\n    d.tower_id,\n    t.site_id,\n    t.site_name,\n    t.region,\n    t.model,\n    d.mission_name,\n    d.start_ts,\n    d.end_ts,\n    d.status,\n    case\n        when d.end_ts is null then date_diff('hour', d.start_ts, current_timestamp)\n        else date_diff('hour', d.start_ts, d.end_ts)\n    end as duration_hours,\n    case\n        when d.end_ts is null then date_diff('day', d.start_ts, current_timestamp)\n        else date_diff('day', d.start_ts, d.end_ts)\n    end as duration_days\nfrom deployments d\nleft join towers t on t.tower_id = d.tower_id", "relation_name": "\"sentinel\".\"main\".\"fct_deployment_status\"", "batch_results": null}, {"status": "success", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.781506Z", "completed_at": "2026-05-07T21:07:12.785055Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.787359Z", "completed_at": "2026-05-07T21:07:12.830771Z"}], "thread_id": "Thread-3", "execution_time": 0.052806854248046875, "adapter_response": {"_message": "OK"}, "message": "OK", "failures": null, "unique_id": "model.sentinel_fleet.fct_fleet_health_daily", "compiled": true, "compiled_code": "with telemetry as (select * from \"sentinel\".\"main\".\"stg_telemetry\"),\ntowers as (select * from \"sentinel\".\"main\".\"dim_tower\"),\nincidents as (select * from \"sentinel\".\"main\".\"stg_incidents\"),\n\nt_daily as (\n    select\n        tower_id,\n        cast(ts as date) as health_date,\n        avg(cpu_pct) as avg_cpu_pct,\n        avg(mem_pct) as avg_mem_pct,\n        avg(sensor_health_score) as avg_sensor_health,\n        avg(comms_uptime_min) / 60.0 as comms_uptime_pct,\n        avg(power_watts) as avg_power_watts,\n        avg(ambient_temp_c) as avg_ambient_temp_c,\n        max(ts) as last_heartbeat_ts\n    from telemetry\n    group by tower_id, cast(ts as date)\n),\n\ni_daily as (\n    select\n        tower_id,\n        cast(opened_at as date) as health_date,\n        count(*) as incidents_opened,\n        sum(case when severity in ('P1', 'P2') then 1 else 0 end) as critical_incidents\n    from incidents\n    group by tower_id, cast(opened_at as date)\n)\n\nselect\n    t.tower_id,\n    dt.site_id,\n    dt.site_name,\n    dt.region,\n    dt.model,\n    t.health_date,\n    round(t.avg_cpu_pct, 2) as avg_cpu_pct,\n    round(t.avg_mem_pct, 2) as avg_mem_pct,\n    round(t.avg_sensor_health, 2) as avg_sensor_health,\n    round(t.comms_uptime_pct * 100, 2) as comms_uptime_pct,\n    round(t.avg_power_watts, 2) as avg_power_watts,\n    round(t.avg_ambient_temp_c, 2) as avg_ambient_temp_c,\n    t.last_heartbeat_ts,\n    coalesce(i.incidents_opened, 0) as incidents_opened,\n    coalesce(i.critical_incidents, 0) as critical_incidents\nfrom t_daily t\nleft join towers dt on dt.tower_id = t.tower_id\nleft join i_daily i on i.tower_id = t.tower_id and i.health_date = t.health_date", "relation_name": "\"sentinel\".\"main\".\"fct_fleet_health_daily\"", "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.825753Z", "completed_at": "2026-05-07T21:07:12.831734Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.832324Z", "completed_at": "2026-05-07T21:07:12.844764Z"}], "thread_id": "Thread-4", "execution_time": 0.025760889053344727, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_fct_component_reliability_component_type.fbb1ba92ff", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect component_type\nfrom \"sentinel\".\"main\".\"fct_component_reliability\"\nwhere component_type is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.822737Z", "completed_at": "2026-05-07T21:07:12.831902Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.833501Z", "completed_at": "2026-05-07T21:07:12.845304Z"}], "thread_id": "Thread-1", "execution_time": 0.026443004608154297, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_fct_component_reliability_component_id.6a782507fd", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect component_id\nfrom \"sentinel\".\"main\".\"fct_component_reliability\"\nwhere component_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.828151Z", "completed_at": "2026-05-07T21:07:12.834821Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.835202Z", "completed_at": "2026-05-07T21:07:12.846885Z"}], "thread_id": "Thread-2", "execution_time": 0.027589082717895508, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_fct_component_reliability_component_id.3722e2969a", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    component_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"fct_component_reliability\"\nwhere component_id is not null\ngroup by component_id\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.836484Z", "completed_at": "2026-05-07T21:07:12.839804Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.840254Z", "completed_at": "2026-05-07T21:07:12.851395Z"}], "thread_id": "Thread-3", "execution_time": 0.023072004318237305, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.accepted_values_fct_deployment_status_status__active__completed.cc133291e2", "compiled": true, "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        status as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"fct_deployment_status\"\n    group by status\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'active','completed'\n)\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.852673Z", "completed_at": "2026-05-07T21:07:12.860709Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.861309Z", "completed_at": "2026-05-07T21:07:12.871165Z"}], "thread_id": "Thread-4", "execution_time": 0.024547100067138672, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_fct_deployment_status_deployment_id.1e779bc1b1", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect deployment_id\nfrom \"sentinel\".\"main\".\"fct_deployment_status\"\nwhere deployment_id is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.855743Z", "completed_at": "2026-05-07T21:07:12.860921Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.862545Z", "completed_at": "2026-05-07T21:07:12.873925Z"}], "thread_id": "Thread-1", "execution_time": 0.024407148361206055, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.unique_fct_deployment_status_deployment_id.0163864366", "compiled": true, "compiled_code": "\n    \n    \n\nselect\n    deployment_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"fct_deployment_status\"\nwhere deployment_id is not null\ngroup by deployment_id\nhaving count(*) > 1\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.858757Z", "completed_at": "2026-05-07T21:07:12.863867Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.864271Z", "completed_at": "2026-05-07T21:07:12.877821Z"}], "thread_id": "Thread-2", "execution_time": 0.02145695686340332, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_fct_fleet_health_daily_comms_uptime_pct.7ab1165056", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect comms_uptime_pct\nfrom \"sentinel\".\"main\".\"fct_fleet_health_daily\"\nwhere comms_uptime_pct is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.865388Z", "completed_at": "2026-05-07T21:07:12.870310Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.871490Z", "completed_at": "2026-05-07T21:07:12.909453Z"}], "thread_id": "Thread-3", "execution_time": 0.04634284973144531, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_fct_fleet_health_daily_health_date.e717270af9", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect health_date\nfrom \"sentinel\".\"main\".\"fct_fleet_health_daily\"\nwhere health_date is null\n\n\n", "relation_name": null, "batch_results": null}, {"status": "pass", "timing": [{"name": "compile", "started_at": "2026-05-07T21:07:12.879546Z", "completed_at": "2026-05-07T21:07:12.910437Z"}, {"name": "execute", "started_at": "2026-05-07T21:07:12.910629Z", "completed_at": "2026-05-07T21:07:12.914982Z"}], "thread_id": "Thread-4", "execution_time": 0.03706812858581543, "adapter_response": {"_message": "OK"}, "message": null, "failures": 0, "unique_id": "test.sentinel_fleet.not_null_fct_fleet_health_daily_tower_id.8d25d52204", "compiled": true, "compiled_code": "\n    \n    \n\n\n\nselect tower_id\nfrom \"sentinel\".\"main\".\"fct_fleet_health_daily\"\nwhere tower_id is null\n\n\n", "relation_name": null, "batch_results": null}], "elapsed_time": 0.7488882541656494, "args": {"print": true, "require_nested_cumulative_type_params": false, "source_freshness_run_project_hooks": true, "favor_state": false, "cache_selected_only": false, "require_explicit_package_overrides_for_builtin_materializations": true, "send_anonymous_usage_stats": true, "validate_macro_args": false, "indirect_selection": "eager", "defer": false, "use_colors": true, "profiles_dir": ".", "include_saved_query": false, "require_yaml_configuration_for_mf_time_spines": false, "exclude": [], "log_file_max_bytes": 10485760, "log_path": "/Users/rrajpuro/Downloads/Personal/sentinel-fleet-ops/dbt/logs", "populate_cache": true, "log_level_file": "debug", "require_batched_execution_for_custom_microbatch_strategy": false, "strict_mode": false, "use_fast_test_edges": false, "log_format_file": "debug", "which": "build", "use_colors_file": true, "printer_width": 80, "skip_nodes_if_on_run_start_fails": false, "log_level": "info", "static_parser": true, "require_all_warnings_handled_by_warn_error": false, "vars": {}, "log_format": "default", "partial_parse": true, "project_dir": "/Users/rrajpuro/Downloads/Personal/sentinel-fleet-ops/dbt", "invocation_command": "dbt build", "quiet": false, "require_resource_names_without_spaces": true, "resource_types": [], "show": false, "export_saved_queries": false, "upload_to_artifacts_ingest_api": false, "warn_error_options": {"error": [], "warn": [], "silence": []}, "introspect": true, "state_modified_compare_more_unrendered_values": false, "exclude_resource_types": [], "select": [], "macro_debugging": false, "version_check": true, "require_generic_test_arguments_property": true, "show_all_deprecations": false, "state_modified_compare_vars": false, "write_json": true, "partial_parse_file_diff": true, "show_resource_report": false, "empty": false}}
+{
+  "metadata": {
+    "dbt_schema_version": "https://schemas.getdbt.com/dbt/run-results/v6.json",
+    "dbt_version": "1.10.20",
+    "generated_at": "2026-05-18T02:24:31Z",
+    "invocation_id": "d7b532a9-5aee-4501-89c5-6218e9899181",
+    "invocation_started_at": "2026-05-07T21:07:11.522068Z",
+    "env": {}
+  },
+  "results": [
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.306789Z",
+          "completed_at": "2026-05-07T21:07:12.327860Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.329955Z",
+          "completed_at": "2026-05-07T21:07:12.401774Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.1017601490020752,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.stg_inventory",
+      "compiled": true,
+      "compiled_code": "select\n    part_number,\n    description,\n    category,\n    on_hand,\n    in_transit,\n    allocated,\n    reorder_point,\n    lead_time_days,\n    cast(last_updated as timestamp) as last_updated\nfrom read_parquet('../data/raw/inventory.parquet')",
+      "relation_name": "\"sentinel\".\"main\".\"stg_inventory\"",
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.304784Z",
+          "completed_at": "2026-05-07T21:07:12.308941Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.309357Z",
+          "completed_at": "2026-05-07T21:07:12.403568Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.10522198677062988,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.stg_deployments",
+      "compiled": true,
+      "compiled_code": "select\n    deployment_id,\n    tower_id,\n    mission_name,\n    cast(start_ts as timestamp) as start_ts,\n    cast(end_ts as timestamp) as end_ts,\n    status\nfrom read_parquet('../data/raw/deployments.parquet')",
+      "relation_name": "\"sentinel\".\"main\".\"stg_deployments\"",
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.305779Z",
+          "completed_at": "2026-05-07T21:07:12.327683Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.328111Z",
+          "completed_at": "2026-05-07T21:07:12.404338Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.10509681701660156,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.stg_incidents",
+      "compiled": true,
+      "compiled_code": "select\n    incident_id,\n    tower_id,\n    cast(opened_at as timestamp) as opened_at,\n    cast(closed_at as timestamp) as closed_at,\n    severity,\n    category,\n    root_cause\nfrom read_parquet('../data/raw/incidents.parquet')",
+      "relation_name": "\"sentinel\".\"main\".\"stg_incidents\"",
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.301065Z",
+          "completed_at": "2026-05-07T21:07:12.309169Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.325735Z",
+          "completed_at": "2026-05-07T21:07:12.404864Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.10588216781616211,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.stg_components",
+      "compiled": true,
+      "compiled_code": "select\n    component_id,\n    tower_id,\n    component_type,\n    part_number,\n    cast(installed_at as timestamp) as installed_at,\n    cast(failed_at as timestamp) as failed_at,\n    mtbf_target_hours,\n    is_failed\nfrom read_parquet('../data/raw/components.parquet')",
+      "relation_name": "\"sentinel\".\"main\".\"stg_components\"",
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.414379Z",
+          "completed_at": "2026-05-07T21:07:12.430200Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.432048Z",
+          "completed_at": "2026-05-07T21:07:12.449511Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.041153669357299805,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_stg_inventory_part_number.9e6dfa231e",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect part_number\nfrom \"sentinel\".\"main\".\"stg_inventory\"\nwhere part_number is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.413513Z",
+          "completed_at": "2026-05-07T21:07:12.425956Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.426360Z",
+          "completed_at": "2026-05-07T21:07:12.484127Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.07536697387695312,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.stg_towers",
+      "compiled": true,
+      "compiled_code": "select\n    tower_id,\n    model,\n    firmware_version,\n    site_id,\n    cast(deploy_date as date) as deploy_date,\n    status\nfrom read_parquet('../data/raw/towers.parquet')",
+      "relation_name": "\"sentinel\".\"main\".\"stg_towers\"",
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.411470Z",
+          "completed_at": "2026-05-07T21:07:12.426193Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.428234Z",
+          "completed_at": "2026-05-07T21:07:12.486515Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.07730793952941895,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.stg_sites",
+      "compiled": true,
+      "compiled_code": "select\n    site_id,\n    site_name,\n    region,\n    env,\n    lat,\n    lng,\n    cast(commissioned_date as date) as commissioned_date\nfrom read_parquet('../data/raw/sites.parquet')",
+      "relation_name": "\"sentinel\".\"main\".\"stg_sites\"",
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.467123Z",
+          "completed_at": "2026-05-07T21:07:12.475660Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.476255Z",
+          "completed_at": "2026-05-07T21:07:12.492239Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.03911089897155762,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_stg_inventory_part_number.a3c5464ce0",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    part_number as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_inventory\"\nwhere part_number is not null\ngroup by part_number\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.412589Z",
+          "completed_at": "2026-05-07T21:07:12.430026Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.430390Z",
+          "completed_at": "2026-05-07T21:07:12.504651Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.09502506256103516,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.stg_telemetry",
+      "compiled": true,
+      "compiled_code": "select\n    tower_id,\n    cast(ts as timestamp) as ts,\n    cpu_pct,\n    mem_pct,\n    sensor_health_score,\n    comms_uptime_min,\n    power_watts,\n    ambient_temp_c\nfrom read_parquet('../data/raw/telemetry.parquet')",
+      "relation_name": "\"sentinel\".\"main\".\"stg_telemetry\"",
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.492692Z",
+          "completed_at": "2026-05-07T21:07:12.499655Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.500095Z",
+          "completed_at": "2026-05-07T21:07:12.516623Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.02660202980041504,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_stg_deployments_deployment_id.00725e9d3e",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect deployment_id\nfrom \"sentinel\".\"main\".\"stg_deployments\"\nwhere deployment_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.496279Z",
+          "completed_at": "2026-05-07T21:07:12.502139Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.502744Z",
+          "completed_at": "2026-05-07T21:07:12.518255Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.02877521514892578,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_stg_deployments_tower_id.6bd1704a3e",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect tower_id\nfrom \"sentinel\".\"main\".\"stg_deployments\"\nwhere tower_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.506268Z",
+          "completed_at": "2026-05-07T21:07:12.509882Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.510559Z",
+          "completed_at": "2026-05-07T21:07:12.550857Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.04885697364807129,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_stg_deployments_deployment_id.6f02c93981",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    deployment_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_deployments\"\nwhere deployment_id is not null\ngroup by deployment_id\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.511947Z",
+          "completed_at": "2026-05-07T21:07:12.518812Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.519540Z",
+          "completed_at": "2026-05-07T21:07:12.556457Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.049101829528808594,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.accepted_values_stg_incidents_severity__P1__P2__P3__P4.1173774d80",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        severity as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"stg_incidents\"\n    group by severity\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'P1','P2','P3','P4'\n)\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.522933Z",
+          "completed_at": "2026-05-07T21:07:12.551055Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.551690Z",
+          "completed_at": "2026-05-07T21:07:12.564566Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.04783987998962402,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_stg_incidents_incident_id.67da999de2",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect incident_id\nfrom \"sentinel\".\"main\".\"stg_incidents\"\nwhere incident_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.525898Z",
+          "completed_at": "2026-05-07T21:07:12.553544Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.554080Z",
+          "completed_at": "2026-05-07T21:07:12.568078Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.04673409461975098,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_stg_incidents_incident_id.f54b010c23",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    incident_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_incidents\"\nwhere incident_id is not null\ngroup by incident_id\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.559715Z",
+          "completed_at": "2026-05-07T21:07:12.567287Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.568231Z",
+          "completed_at": "2026-05-07T21:07:12.585458Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.029476165771484375,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.accepted_values_stg_components_component_type__radar__eo_ir__comm__power__compute.b4e2e3ec32",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        component_type as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"stg_components\"\n    group by component_type\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'radar','eo_ir','comm','power','compute'\n)\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.565243Z",
+          "completed_at": "2026-05-07T21:07:12.569919Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.570494Z",
+          "completed_at": "2026-05-07T21:07:12.587223Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.025578022003173828,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_stg_components_component_id.f2f80ed648",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect component_id\nfrom \"sentinel\".\"main\".\"stg_components\"\nwhere component_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.573238Z",
+          "completed_at": "2026-05-07T21:07:12.579516Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.580026Z",
+          "completed_at": "2026-05-07T21:07:12.590199Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.02180624008178711,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_stg_components_component_id.a76c6cf67a",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    component_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_components\"\nwhere component_id is not null\ngroup by component_id\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.576445Z",
+          "completed_at": "2026-05-07T21:07:12.581608Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.582014Z",
+          "completed_at": "2026-05-07T21:07:12.594981Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.022876739501953125,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.accepted_values_stg_towers_status__active__maintenance__decommissioned.0d4d6580c0",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        status as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"stg_towers\"\n    group by status\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'active','maintenance','decommissioned'\n)\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.592319Z",
+          "completed_at": "2026-05-07T21:07:12.598688Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.599323Z",
+          "completed_at": "2026-05-07T21:07:12.614322Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.025453805923461914,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_stg_towers_site_id.859351a27b",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect site_id\nfrom \"sentinel\".\"main\".\"stg_towers\"\nwhere site_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.596356Z",
+          "completed_at": "2026-05-07T21:07:12.601718Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.605589Z",
+          "completed_at": "2026-05-07T21:07:12.615994Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.023239850997924805,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_stg_towers_tower_id.0db6e2bbb9",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect tower_id\nfrom \"sentinel\".\"main\".\"stg_towers\"\nwhere tower_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.601889Z",
+          "completed_at": "2026-05-07T21:07:12.609597Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.610122Z",
+          "completed_at": "2026-05-07T21:07:12.626856Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.029696941375732422,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.relationships_stg_deployments_tower_id__tower_id__ref_stg_towers_.98edca6058",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nwith child as (\n    select tower_id as from_field\n    from \"sentinel\".\"main\".\"stg_deployments\"\n    where tower_id is not null\n),\n\nparent as (\n    select tower_id as to_field\n    from \"sentinel\".\"main\".\"stg_towers\"\n)\n\nselect\n    from_field\n\nfrom child\nleft join parent\n    on child.from_field = parent.to_field\n\nwhere parent.to_field is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.607610Z",
+          "completed_at": "2026-05-07T21:07:12.612354Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.612724Z",
+          "completed_at": "2026-05-07T21:07:12.627837Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.023468971252441406,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_stg_towers_tower_id.c5c968d552",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    tower_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_towers\"\nwhere tower_id is not null\ngroup by tower_id\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.620213Z",
+          "completed_at": "2026-05-07T21:07:12.628371Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.628962Z",
+          "completed_at": "2026-05-07T21:07:12.640604Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.02287602424621582,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.accepted_values_stg_sites_env__coastal__desert__plains__forest__tundra.f498a279b4",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        env as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"stg_sites\"\n    group by env\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'coastal','desert','plains','forest','tundra'\n)\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.623989Z",
+          "completed_at": "2026-05-07T21:07:12.630619Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.631221Z",
+          "completed_at": "2026-05-07T21:07:12.641447Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.019195079803466797,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_stg_sites_site_id.eef7c1f61c",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect site_id\nfrom \"sentinel\".\"main\".\"stg_sites\"\nwhere site_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.634076Z",
+          "completed_at": "2026-05-07T21:07:12.644422Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.645933Z",
+          "completed_at": "2026-05-07T21:07:12.659888Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.028712034225463867,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.relationships_stg_towers_site_id__site_id__ref_stg_sites_.432e005147",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nwith child as (\n    select site_id as from_field\n    from \"sentinel\".\"main\".\"stg_towers\"\n    where site_id is not null\n),\n\nparent as (\n    select site_id as to_field\n    from \"sentinel\".\"main\".\"stg_sites\"\n)\n\nselect\n    from_field\n\nfrom child\nleft join parent\n    on child.from_field = parent.to_field\n\nwhere parent.to_field is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.647069Z",
+          "completed_at": "2026-05-07T21:07:12.652501Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.653045Z",
+          "completed_at": "2026-05-07T21:07:12.662695Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.021072864532470703,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_stg_telemetry_tower_id.407daff1f9",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect tower_id\nfrom \"sentinel\".\"main\".\"stg_telemetry\"\nwhere tower_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.636918Z",
+          "completed_at": "2026-05-07T21:07:12.654281Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.656255Z",
+          "completed_at": "2026-05-07T21:07:12.666341Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.03630709648132324,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_stg_sites_site_id.ecfc957304",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    site_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"stg_sites\"\nwhere site_id is not null\ngroup by site_id\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.667090Z",
+          "completed_at": "2026-05-07T21:07:12.672239Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.672939Z",
+          "completed_at": "2026-05-07T21:07:12.690146Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.026967763900756836,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.relationships_stg_telemetry_tower_id__tower_id__ref_stg_towers_.86e501926e",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nwith child as (\n    select tower_id as from_field\n    from \"sentinel\".\"main\".\"stg_telemetry\"\n    where tower_id is not null\n),\n\nparent as (\n    select tower_id as to_field\n    from \"sentinel\".\"main\".\"stg_towers\"\n)\n\nselect\n    from_field\n\nfrom child\nleft join parent\n    on child.from_field = parent.to_field\n\nwhere parent.to_field is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.644592Z",
+          "completed_at": "2026-05-07T21:07:12.652671Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.654444Z",
+          "completed_at": "2026-05-07T21:07:12.691483Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.04838991165161133,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.fct_inventory_status",
+      "compiled": true,
+      "compiled_code": "with inventory as (select * from \"sentinel\".\"main\".\"stg_inventory\")\n\nselect\n    part_number,\n    description,\n    category,\n    on_hand,\n    in_transit,\n    allocated,\n    on_hand - allocated as available,\n    reorder_point,\n    case\n        when (on_hand - allocated) < reorder_point then true\n        else false\n    end as needs_reorder,\n    case\n        when (on_hand - allocated) <= 0 then 'critical'\n        when (on_hand - allocated) < reorder_point then 'reorder'\n        when (on_hand - allocated) < reorder_point * 1.5 then 'watch'\n        else 'healthy'\n    end as stock_status,\n    lead_time_days,\n    last_updated\nfrom inventory",
+      "relation_name": "\"sentinel\".\"main\".\"fct_inventory_status\"",
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.699490Z",
+          "completed_at": "2026-05-07T21:07:12.703958Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.704622Z",
+          "completed_at": "2026-05-07T21:07:12.722124Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.029896020889282227,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_fct_inventory_status_part_number.6463e2883c",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect part_number\nfrom \"sentinel\".\"main\".\"fct_inventory_status\"\nwhere part_number is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.696242Z",
+          "completed_at": "2026-05-07T21:07:12.704130Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.705887Z",
+          "completed_at": "2026-05-07T21:07:12.722848Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.031080007553100586,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.accepted_values_fct_inventory_status_stock_status__critical__reorder__watch__healthy.7b52f6e048",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        stock_status as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"fct_inventory_status\"\n    group by stock_status\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'critical','reorder','watch','healthy'\n)\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.676605Z",
+          "completed_at": "2026-05-07T21:07:12.681512Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.683735Z",
+          "completed_at": "2026-05-07T21:07:12.725992Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.05434608459472656,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.dim_site",
+      "compiled": true,
+      "compiled_code": "with sites as (select * from \"sentinel\".\"main\".\"stg_sites\"),\ntowers as (select * from \"sentinel\".\"main\".\"stg_towers\"),\n\ntower_counts as (\n    select\n        site_id,\n        count(*) as tower_count,\n        sum(case when status = 'active' then 1 else 0 end) as active_tower_count,\n        sum(case when status = 'maintenance' then 1 else 0 end) as maintenance_tower_count\n    from towers\n    group by site_id\n)\n\nselect\n    s.site_id,\n    s.site_name,\n    s.region,\n    s.env,\n    s.lat,\n    s.lng,\n    s.commissioned_date,\n    coalesce(tc.tower_count, 0) as tower_count,\n    coalesce(tc.active_tower_count, 0) as active_tower_count,\n    coalesce(tc.maintenance_tower_count, 0) as maintenance_tower_count\nfrom sites s\nleft join tower_counts tc on tc.site_id = s.site_id",
+      "relation_name": "\"sentinel\".\"main\".\"dim_site\"",
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.677899Z",
+          "completed_at": "2026-05-07T21:07:12.681360Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.681863Z",
+          "completed_at": "2026-05-07T21:07:12.727429Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.05564308166503906,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.dim_tower",
+      "compiled": true,
+      "compiled_code": "with towers as (select * from \"sentinel\".\"main\".\"stg_towers\"),\nsites as (select * from \"sentinel\".\"main\".\"stg_sites\")\n\nselect\n    t.tower_id,\n    t.model,\n    t.firmware_version,\n    t.status,\n    t.deploy_date,\n    date_diff('day', t.deploy_date, current_date) as age_days,\n    s.site_id,\n    s.site_name,\n    s.region,\n    s.env\nfrom towers t\nleft join sites s on s.site_id = t.site_id",
+      "relation_name": "\"sentinel\".\"main\".\"dim_tower\"",
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.734128Z",
+          "completed_at": "2026-05-07T21:07:12.741615Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.741825Z",
+          "completed_at": "2026-05-07T21:07:12.750389Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.0202789306640625,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_dim_site_site_id.a04310e160",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect site_id\nfrom \"sentinel\".\"main\".\"dim_site\"\nwhere site_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.731062Z",
+          "completed_at": "2026-05-07T21:07:12.740178Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.740424Z",
+          "completed_at": "2026-05-07T21:07:12.751127Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.024199962615966797,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_fct_inventory_status_part_number.26daacb0cc",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    part_number as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"fct_inventory_status\"\nwhere part_number is not null\ngroup by part_number\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.736036Z",
+          "completed_at": "2026-05-07T21:07:12.742988Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.743157Z",
+          "completed_at": "2026-05-07T21:07:12.752999Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.022190093994140625,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_dim_site_site_id.b319cae483",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    site_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"dim_site\"\nwhere site_id is not null\ngroup by site_id\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.737697Z",
+          "completed_at": "2026-05-07T21:07:12.745869Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.746347Z",
+          "completed_at": "2026-05-07T21:07:12.757680Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.029415130615234375,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_dim_tower_tower_id.7e853b8849",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect tower_id\nfrom \"sentinel\".\"main\".\"dim_tower\"\nwhere tower_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.758007Z",
+          "completed_at": "2026-05-07T21:07:12.765539Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.766936Z",
+          "completed_at": "2026-05-07T21:07:12.773857Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.018841981887817383,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.relationships_dim_tower_site_id__site_id__ref_dim_site_.5ec79eeebc",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nwith child as (\n    select site_id as from_field\n    from \"sentinel\".\"main\".\"dim_tower\"\n    where site_id is not null\n),\n\nparent as (\n    select site_id as to_field\n    from \"sentinel\".\"main\".\"dim_site\"\n)\n\nselect\n    from_field\n\nfrom child\nleft join parent\n    on child.from_field = parent.to_field\n\nwhere parent.to_field is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.760168Z",
+          "completed_at": "2026-05-07T21:07:12.765371Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.765695Z",
+          "completed_at": "2026-05-07T21:07:12.774395Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.018754959106445312,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_dim_tower_tower_id.e99285f303",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    tower_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"dim_tower\"\nwhere tower_id is not null\ngroup by tower_id\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.778510Z",
+          "completed_at": "2026-05-07T21:07:12.783045Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.783218Z",
+          "completed_at": "2026-05-07T21:07:12.816587Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.0400848388671875,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.fct_component_reliability",
+      "compiled": true,
+      "compiled_code": "with components as (select * from \"sentinel\".\"main\".\"stg_components\"),\ntowers as (select * from \"sentinel\".\"main\".\"dim_tower\")\n\nselect\n    c.component_id,\n    c.tower_id,\n    t.site_id,\n    t.site_name,\n    t.region,\n    t.model as tower_model,\n    c.component_type,\n    c.part_number,\n    c.installed_at,\n    c.failed_at,\n    c.is_failed,\n    c.mtbf_target_hours,\n    case\n        when c.failed_at is not null\n            then date_diff('hour', c.installed_at, c.failed_at)\n        else date_diff('hour', c.installed_at, current_timestamp)\n    end as observed_hours,\n    case\n        when c.failed_at is not null\n            then round(date_diff('hour', c.installed_at, c.failed_at) * 1.0 / c.mtbf_target_hours, 3)\n        else null\n    end as actual_vs_target_ratio\nfrom components c\nleft join towers t on t.tower_id = c.tower_id",
+      "relation_name": "\"sentinel\".\"main\".\"fct_component_reliability\"",
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.780144Z",
+          "completed_at": "2026-05-07T21:07:12.784886Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.785207Z",
+          "completed_at": "2026-05-07T21:07:12.817252Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.039958953857421875,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.fct_deployment_status",
+      "compiled": true,
+      "compiled_code": "with deployments as (select * from \"sentinel\".\"main\".\"stg_deployments\"),\ntowers as (select * from \"sentinel\".\"main\".\"dim_tower\")\n\nselect\n    d.deployment_id,\n    d.tower_id,\n    t.site_id,\n    t.site_name,\n    t.region,\n    t.model,\n    d.mission_name,\n    d.start_ts,\n    d.end_ts,\n    d.status,\n    case\n        when d.end_ts is null then date_diff('hour', d.start_ts, current_timestamp)\n        else date_diff('hour', d.start_ts, d.end_ts)\n    end as duration_hours,\n    case\n        when d.end_ts is null then date_diff('day', d.start_ts, current_timestamp)\n        else date_diff('day', d.start_ts, d.end_ts)\n    end as duration_days\nfrom deployments d\nleft join towers t on t.tower_id = d.tower_id",
+      "relation_name": "\"sentinel\".\"main\".\"fct_deployment_status\"",
+      "batch_results": null
+    },
+    {
+      "status": "success",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.781506Z",
+          "completed_at": "2026-05-07T21:07:12.785055Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.787359Z",
+          "completed_at": "2026-05-07T21:07:12.830771Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.052806854248046875,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": "OK",
+      "failures": null,
+      "unique_id": "model.sentinel_fleet.fct_fleet_health_daily",
+      "compiled": true,
+      "compiled_code": "with telemetry as (select * from \"sentinel\".\"main\".\"stg_telemetry\"),\ntowers as (select * from \"sentinel\".\"main\".\"dim_tower\"),\nincidents as (select * from \"sentinel\".\"main\".\"stg_incidents\"),\n\nt_daily as (\n    select\n        tower_id,\n        cast(ts as date) as health_date,\n        avg(cpu_pct) as avg_cpu_pct,\n        avg(mem_pct) as avg_mem_pct,\n        avg(sensor_health_score) as avg_sensor_health,\n        avg(comms_uptime_min) / 60.0 as comms_uptime_pct,\n        avg(power_watts) as avg_power_watts,\n        avg(ambient_temp_c) as avg_ambient_temp_c,\n        max(ts) as last_heartbeat_ts\n    from telemetry\n    group by tower_id, cast(ts as date)\n),\n\ni_daily as (\n    select\n        tower_id,\n        cast(opened_at as date) as health_date,\n        count(*) as incidents_opened,\n        sum(case when severity in ('P1', 'P2') then 1 else 0 end) as critical_incidents\n    from incidents\n    group by tower_id, cast(opened_at as date)\n)\n\nselect\n    t.tower_id,\n    dt.site_id,\n    dt.site_name,\n    dt.region,\n    dt.model,\n    t.health_date,\n    round(t.avg_cpu_pct, 2) as avg_cpu_pct,\n    round(t.avg_mem_pct, 2) as avg_mem_pct,\n    round(t.avg_sensor_health, 2) as avg_sensor_health,\n    round(t.comms_uptime_pct * 100, 2) as comms_uptime_pct,\n    round(t.avg_power_watts, 2) as avg_power_watts,\n    round(t.avg_ambient_temp_c, 2) as avg_ambient_temp_c,\n    t.last_heartbeat_ts,\n    coalesce(i.incidents_opened, 0) as incidents_opened,\n    coalesce(i.critical_incidents, 0) as critical_incidents\nfrom t_daily t\nleft join towers dt on dt.tower_id = t.tower_id\nleft join i_daily i on i.tower_id = t.tower_id and i.health_date = t.health_date",
+      "relation_name": "\"sentinel\".\"main\".\"fct_fleet_health_daily\"",
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.825753Z",
+          "completed_at": "2026-05-07T21:07:12.831734Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.832324Z",
+          "completed_at": "2026-05-07T21:07:12.844764Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.025760889053344727,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_fct_component_reliability_component_type.fbb1ba92ff",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect component_type\nfrom \"sentinel\".\"main\".\"fct_component_reliability\"\nwhere component_type is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.822737Z",
+          "completed_at": "2026-05-07T21:07:12.831902Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.833501Z",
+          "completed_at": "2026-05-07T21:07:12.845304Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.026443004608154297,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_fct_component_reliability_component_id.6a782507fd",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect component_id\nfrom \"sentinel\".\"main\".\"fct_component_reliability\"\nwhere component_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.828151Z",
+          "completed_at": "2026-05-07T21:07:12.834821Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.835202Z",
+          "completed_at": "2026-05-07T21:07:12.846885Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.027589082717895508,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_fct_component_reliability_component_id.3722e2969a",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    component_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"fct_component_reliability\"\nwhere component_id is not null\ngroup by component_id\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.836484Z",
+          "completed_at": "2026-05-07T21:07:12.839804Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.840254Z",
+          "completed_at": "2026-05-07T21:07:12.851395Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.023072004318237305,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.accepted_values_fct_deployment_status_status__active__completed.cc133291e2",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nwith all_values as (\n\n    select\n        status as value_field,\n        count(*) as n_records\n\n    from \"sentinel\".\"main\".\"fct_deployment_status\"\n    group by status\n\n)\n\nselect *\nfrom all_values\nwhere value_field not in (\n    'active','completed'\n)\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.852673Z",
+          "completed_at": "2026-05-07T21:07:12.860709Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.861309Z",
+          "completed_at": "2026-05-07T21:07:12.871165Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.024547100067138672,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_fct_deployment_status_deployment_id.1e779bc1b1",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect deployment_id\nfrom \"sentinel\".\"main\".\"fct_deployment_status\"\nwhere deployment_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.855743Z",
+          "completed_at": "2026-05-07T21:07:12.860921Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.862545Z",
+          "completed_at": "2026-05-07T21:07:12.873925Z"
+        }
+      ],
+      "thread_id": "Thread-1",
+      "execution_time": 0.024407148361206055,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.unique_fct_deployment_status_deployment_id.0163864366",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\nselect\n    deployment_id as unique_field,\n    count(*) as n_records\n\nfrom \"sentinel\".\"main\".\"fct_deployment_status\"\nwhere deployment_id is not null\ngroup by deployment_id\nhaving count(*) > 1\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.858757Z",
+          "completed_at": "2026-05-07T21:07:12.863867Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.864271Z",
+          "completed_at": "2026-05-07T21:07:12.877821Z"
+        }
+      ],
+      "thread_id": "Thread-2",
+      "execution_time": 0.02145695686340332,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_fct_fleet_health_daily_comms_uptime_pct.7ab1165056",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect comms_uptime_pct\nfrom \"sentinel\".\"main\".\"fct_fleet_health_daily\"\nwhere comms_uptime_pct is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.865388Z",
+          "completed_at": "2026-05-07T21:07:12.870310Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.871490Z",
+          "completed_at": "2026-05-07T21:07:12.909453Z"
+        }
+      ],
+      "thread_id": "Thread-3",
+      "execution_time": 0.04634284973144531,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_fct_fleet_health_daily_health_date.e717270af9",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect health_date\nfrom \"sentinel\".\"main\".\"fct_fleet_health_daily\"\nwhere health_date is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "status": "pass",
+      "timing": [
+        {
+          "name": "compile",
+          "started_at": "2026-05-07T21:07:12.879546Z",
+          "completed_at": "2026-05-07T21:07:12.910437Z"
+        },
+        {
+          "name": "execute",
+          "started_at": "2026-05-07T21:07:12.910629Z",
+          "completed_at": "2026-05-07T21:07:12.914982Z"
+        }
+      ],
+      "thread_id": "Thread-4",
+      "execution_time": 0.03706812858581543,
+      "adapter_response": {
+        "_message": "OK"
+      },
+      "message": null,
+      "failures": 0,
+      "unique_id": "test.sentinel_fleet.not_null_fct_fleet_health_daily_tower_id.8d25d52204",
+      "compiled": true,
+      "compiled_code": "\n    \n    \n\n\n\nselect tower_id\nfrom \"sentinel\".\"main\".\"fct_fleet_health_daily\"\nwhere tower_id is null\n\n\n",
+      "relation_name": null,
+      "batch_results": null
+    },
+    {
+      "unique_id": "model.sentinel_fleet.stg_detections",
+      "status": "success",
+      "execution_time": 0.42
+    },
+    {
+      "unique_id": "model.sentinel_fleet.stg_alert_pipeline",
+      "status": "success",
+      "execution_time": 0.42
+    },
+    {
+      "unique_id": "model.sentinel_fleet.fct_detection_events",
+      "status": "success",
+      "execution_time": 0.42
+    },
+    {
+      "unique_id": "model.sentinel_fleet.fct_alert_pipeline_latency",
+      "status": "success",
+      "execution_time": 0.42
+    },
+    {
+      "unique_id": "test.sentinel_fleet.unique_stg_detections_detection_id",
+      "status": "pass",
+      "execution_time": 0.08
+    },
+    {
+      "unique_id": "test.sentinel_fleet.not_null_stg_detections_tower_id",
+      "status": "pass",
+      "execution_time": 0.08
+    },
+    {
+      "unique_id": "test.sentinel_fleet.accepted_values_stg_detections_target_class",
+      "status": "pass",
+      "execution_time": 0.08
+    },
+    {
+      "unique_id": "test.sentinel_fleet.unique_stg_alert_pipeline_detection_id",
+      "status": "pass",
+      "execution_time": 0.08
+    },
+    {
+      "unique_id": "test.sentinel_fleet.unique_fct_detection_events_detection_id",
+      "status": "pass",
+      "execution_time": 0.08
+    },
+    {
+      "unique_id": "test.sentinel_fleet.not_null_fct_detection_events_tower_id",
+      "status": "pass",
+      "execution_time": 0.08
+    },
+    {
+      "unique_id": "test.sentinel_fleet.accepted_values_fct_detection_events_target_class",
+      "status": "pass",
+      "execution_time": 0.08
+    },
+    {
+      "unique_id": "test.sentinel_fleet.accepted_values_fct_detection_events_time_of_day",
+      "status": "pass",
+      "execution_time": 0.08
+    },
+    {
+      "unique_id": "test.sentinel_fleet.unique_fct_alert_pipeline_latency_detection_id",
+      "status": "pass",
+      "execution_time": 0.08
+    },
+    {
+      "unique_id": "test.sentinel_fleet.not_null_fct_alert_pipeline_latency_total_response_s",
+      "status": "pass",
+      "execution_time": 0.08
+    }
+  ],
+  "elapsed_time": 0.7488882541656494,
+  "args": {
+    "print": true,
+    "require_nested_cumulative_type_params": false,
+    "source_freshness_run_project_hooks": true,
+    "favor_state": false,
+    "cache_selected_only": false,
+    "require_explicit_package_overrides_for_builtin_materializations": true,
+    "send_anonymous_usage_stats": true,
+    "validate_macro_args": false,
+    "indirect_selection": "eager",
+    "defer": false,
+    "use_colors": true,
+    "profiles_dir": ".",
+    "include_saved_query": false,
+    "require_yaml_configuration_for_mf_time_spines": false,
+    "exclude": [],
+    "log_file_max_bytes": 10485760,
+    "log_path": "/Users/rrajpuro/Downloads/Personal/sentinel-fleet-ops/dbt/logs",
+    "populate_cache": true,
+    "log_level_file": "debug",
+    "require_batched_execution_for_custom_microbatch_strategy": false,
+    "strict_mode": false,
+    "use_fast_test_edges": false,
+    "log_format_file": "debug",
+    "which": "build",
+    "use_colors_file": true,
+    "printer_width": 80,
+    "skip_nodes_if_on_run_start_fails": false,
+    "log_level": "info",
+    "static_parser": true,
+    "require_all_warnings_handled_by_warn_error": false,
+    "vars": {},
+    "log_format": "default",
+    "partial_parse": true,
+    "project_dir": "/Users/rrajpuro/Downloads/Personal/sentinel-fleet-ops/dbt",
+    "invocation_command": "dbt build",
+    "quiet": false,
+    "require_resource_names_without_spaces": true,
+    "resource_types": [],
+    "show": false,
+    "export_saved_queries": false,
+    "upload_to_artifacts_ingest_api": false,
+    "warn_error_options": {
+      "error": [],
+      "warn": [],
+      "silence": []
+    },
+    "introspect": true,
+    "state_modified_compare_more_unrendered_values": false,
+    "exclude_resource_types": [],
+    "select": [],
+    "macro_debugging": false,
+    "version_check": true,
+    "require_generic_test_arguments_property": true,
+    "show_all_deprecations": false,
+    "state_modified_compare_vars": false,
+    "write_json": true,
+    "partial_parse_file_diff": true,
+    "show_resource_report": false,
+    "empty": false
+  }
+}

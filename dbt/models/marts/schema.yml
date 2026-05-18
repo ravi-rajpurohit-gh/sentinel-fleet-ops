@@ -49,3 +49,26 @@ models:
         tests:
           - accepted_values:
               values: ['critical', 'reorder', 'watch', 'healthy']
+
+  - name: fct_detection_events
+    columns:
+      - name: detection_id
+        tests: [unique, not_null]
+      - name: tower_id
+        tests: [not_null]
+      - name: target_class
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['human', 'vehicle', 'UAS', 'unknown']
+      - name: time_of_day
+        tests:
+          - accepted_values:
+              values: ['dawn', 'day', 'dusk', 'night']
+
+  - name: fct_alert_pipeline_latency
+    columns:
+      - name: detection_id
+        tests: [unique, not_null]
+      - name: total_response_s
+        tests: [not_null]

@@ -1,7 +1,7 @@
 """
-Generate synthetic fleet operations data for the Sentinel Fleet Ops demo.
+Generate synthetic fleet operations data for the Sentinel Mission Analytics demo.
 
-Writes 7 parquet files to data/raw/. Deterministic via fixed seed.
+Writes 9 parquet files to data/raw/. Deterministic via fixed seed.
 """
 from __future__ import annotations
 
@@ -278,20 +278,142 @@ for part_number, desc, category, reorder, target_qty, lead in INVENTORY_PARTS:
 inventory = pd.DataFrame(inventory_rows)
 
 
+# --- detections ----------------------------------------------------------
+# Per-site detection rates (events per active tower per day).
+# Border sectors are the highest-activity zones.
+SITE_DETECTION_RATE = {
+    "S01": 1.0, "S02": 1.5, "S03": 2.0, "S04": 1.8,
+    "S05": 1.2, "S06": 0.8, "S07": 4.0, "S08": 3.5,
+    "S09": 1.0, "S10": 0.5,
+}
+
+# Hour-of-day multipliers — peaks at dawn and dusk (realistic for surveillance).
+HOUR_WEIGHTS = np.array([
+    0.4, 0.3, 0.3, 0.3, 0.4,   # 00-04  overnight
+    1.8, 2.2, 2.0,              # 05-07  dawn surge
+    0.9, 0.7, 0.6, 0.6, 0.6,   # 08-12  mid-morning quiet
+    0.6, 0.6, 0.7, 0.9, 1.0,   # 13-17  afternoon build
+    1.9, 2.1, 1.8,              # 18-20  dusk surge
+    1.2, 0.9, 0.6,              # 21-23  evening taper
+])
+HOUR_WEIGHTS = HOUR_WEIGHTS / HOUR_WEIGHTS.sum()
+
+TARGET_CLASSES   = ["human", "vehicle", "UAS", "unknown"]
+CLASS_WEIGHTS    = [0.50,    0.25,      0.15,  0.10]
+# (mean_conf, std_conf) by target class
+CONF_PARAMS      = {"human": (0.82, 0.10), "vehicle": (0.87, 0.08),
+                    "UAS": (0.65, 0.15), "unknown": (0.45, 0.15)}
+FP_RATE          = {"human": 0.05, "vehicle": 0.04, "UAS": 0.18, "unknown": 0.35}
+
+tower_site_map = towers.set_index("tower_id")["site_id"].to_dict()
+active_towers = towers[towers.status != "decommissioned"]
+
+detections = []
+det_counter = 1
+total_hours = WINDOW_DAYS * 24
+
+for _, t in active_towers.iterrows():
+    base_rate = SITE_DETECTION_RATE.get(t.site_id, 1.0)
+    # Total expected detections for this tower over the window
+    n_dets = int(rng.poisson(base_rate * WINDOW_DAYS))
+    if n_dets == 0:
+        continue
+
+    # Sample timestamps: pick hours weighted by time-of-day profile
+    hours_offsets = rng.choice(total_hours, size=n_dets, p=np.repeat(HOUR_WEIGHTS, WINDOW_DAYS) / WINDOW_DAYS)
+    minute_offsets = rng.integers(0, 60, size=n_dets)
+    second_offsets = rng.integers(0, 60, size=n_dets)
+
+    for idx in range(n_dets):
+        detected_at = START + timedelta(
+            hours=int(hours_offsets[idx]),
+            minutes=int(minute_offsets[idx]),
+            seconds=int(second_offsets[idx]),
+        )
+        if detected_at >= NOW:
+            continue
+
+        target_class = rng.choice(TARGET_CLASSES, p=CLASS_WEIGHTS)
+        mu, sigma = CONF_PARAMS[target_class]
+        confidence = float(np.clip(rng.normal(mu, sigma), 0.10, 0.99))
+        auto_resolved = bool(confidence >= 0.85 and target_class != "unknown")
+        escalated = not auto_resolved
+        false_positive = bool(rng.random() < FP_RATE[target_class])
+
+        detections.append({
+            "detection_id":  f"DET{det_counter:07d}",
+            "tower_id":      t.tower_id,
+            "site_id":       t.site_id,
+            "detected_at":   detected_at,
+            "target_class":  target_class,
+            "confidence_score": round(confidence, 4),
+            "bearing_deg":   round(float(rng.uniform(0, 360)), 1),
+            "range_m":       int(rng.integers(50, 2001)),
+            "auto_resolved": auto_resolved,
+            "escalated_to_operator": escalated,
+            "false_positive": false_positive,
+        })
+        det_counter += 1
+
+detections = pd.DataFrame(detections).sort_values("detected_at").reset_index(drop=True)
+
+
+# --- alert pipeline ------------------------------------------------------
+# One row per escalated detection — captures end-to-end operator response latency.
+escalated = detections[detections["escalated_to_operator"]].copy()
+
+alert_rows = []
+for _, d in escalated.iterrows():
+    det_ts = d.detected_at
+    hour = det_ts.hour
+    # Overnight shifts (22:00-06:00) have degraded ack times
+    overnight = hour >= 22 or hour < 6
+    ack_multiplier = rng.uniform(2.0, 4.0) if overnight else 1.0
+
+    dt_alert   = timedelta(seconds=float(rng.uniform(2, 15)))
+    dt_notify  = timedelta(seconds=float(rng.uniform(5, 30)))
+    dt_ack     = timedelta(seconds=float(rng.uniform(30, 300) * ack_multiplier))
+    dt_resolve = timedelta(seconds=float(rng.uniform(60, 1800)))
+
+    alert_ts   = det_ts + dt_alert
+    notify_ts  = alert_ts + dt_notify
+    ack_ts     = notify_ts + dt_ack
+    resolve_ts = ack_ts + dt_resolve
+
+    alert_rows.append({
+        "detection_id":          d.detection_id,
+        "detection_ts":          det_ts,
+        "alert_generated_ts":    alert_ts,
+        "operator_notified_ts":  notify_ts,
+        "operator_ack_ts":       ack_ts,
+        "resolved_ts":           resolve_ts,
+        "is_overnight":          overnight,
+        "detection_to_alert_s":  round(dt_alert.total_seconds(), 1),
+        "alert_to_notify_s":     round(dt_notify.total_seconds(), 1),
+        "notify_to_ack_s":       round((ack_ts - notify_ts).total_seconds(), 1),
+        "ack_to_resolve_s":      round(dt_resolve.total_seconds(), 1),
+        "total_response_s":      round((resolve_ts - det_ts).total_seconds(), 1),
+    })
+
+alert_pipeline = pd.DataFrame(alert_rows)
+
+
 # --- write parquet -------------------------------------------------------
 out = {
-    "sites": sites,
-    "towers": towers,
-    "telemetry": telemetry,
-    "deployments": deployments,
-    "incidents": incidents,
-    "components": components,
-    "inventory": inventory,
+    "sites":          sites,
+    "towers":         towers,
+    "telemetry":      telemetry,
+    "deployments":    deployments,
+    "incidents":      incidents,
+    "components":     components,
+    "inventory":      inventory,
+    "detections":     detections,
+    "alert_pipeline": alert_pipeline,
 }
 for name, df in out.items():
     path = RAW / f"{name}.parquet"
     df.to_parquet(path, index=False)
-    print(f"  {name:12s} {len(df):>7,} rows  →  {path.relative_to(ROOT)}")
+    print(f"  {name:16s} {len(df):>7,} rows  →  {path.relative_to(ROOT)}")
 
 print(f"\nGenerated {sum(len(d) for d in out.values()):,} rows across {len(out)} tables")
 print(f"Window: {START.date()} → {NOW.date()}  ({WINDOW_DAYS} days)")

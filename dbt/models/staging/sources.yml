@@ -2,7 +2,7 @@ version: 2
 
 sources:
   - name: raw
-    description: "Synthetic raw fleet data, written by scripts/generate_data.py"
+    description: "Synthetic raw data for Sentinel Mission Analytics, written by scripts/generate_data.py"
     meta:
       external_location: "../data/raw/{name}.parquet"
     tables:
@@ -17,3 +17,13 @@ sources:
       - name: incidents
       - name: components
       - name: inventory
+      - name: detections
+        loaded_at_field: detected_at
+        freshness:
+          warn_after: {count: 6, period: hour}
+          error_after: {count: 24, period: hour}
+      - name: alert_pipeline
+        loaded_at_field: detection_ts
+        freshness:
+          warn_after: {count: 6, period: hour}
+          error_after: {count: 24, period: hour}
