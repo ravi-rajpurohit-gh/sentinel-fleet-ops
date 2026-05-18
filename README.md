@@ -4,7 +4,9 @@
 
 A data engineering portfolio project built to demonstrate end-to-end analytics for a distributed autonomous sensor fleet — synthetic data, a dbt star schema on DuckDB, and a Streamlit interface surfacing four operational views.
 
-**Live app →** https://sentinel-fleet-ops.streamlit.app/
+**Live app →** https://sentinel-fleet-ops.streamlit.app/  
+**Project board →** https://github.com/users/ravi-rajpurohit-gh/projects/1  
+**Changelog →** [CHANGELOG.md](./CHANGELOG.md)
 
 ---
 
