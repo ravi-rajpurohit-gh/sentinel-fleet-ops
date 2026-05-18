@@ -357,39 +357,87 @@ kpi = q(f"""
         join dim_tower t using (tower_id)
         where i.closed_at is null and i.severity in ('P1','P2') {site_filter_clause}
     ),
-    avg_uptime as (
+    uptime_curr as (
         select avg(comms_uptime_pct) as up
         from fct_fleet_health_daily
         where health_date >= current_date - 7 {site_filter_clause}
     ),
-    failed_comp as (
+    uptime_prev as (
+        select avg(comms_uptime_pct) as up
+        from fct_fleet_health_daily
+        where health_date >= current_date - 14 and health_date < current_date - 7
+              {site_filter_clause}
+    ),
+    failed_curr as (
         select count(*) as n from fct_component_reliability
         where is_failed and failed_at >= current_timestamp - interval 30 day
               {site_filter_clause}
+    ),
+    failed_prev as (
+        select count(*) as n from fct_component_reliability
+        where is_failed
+          and failed_at >= current_timestamp - interval 60 day
+          and failed_at <  current_timestamp - interval 30 day
+              {site_filter_clause}
+    ),
+    inc_prev as (
+        select count(*) as n from stg_incidents i
+        join dim_tower t using (tower_id)
+        where i.opened_at >= current_timestamp - interval 14 day
+          and i.opened_at <  current_timestamp - interval 7 day
+              {site_filter_clause}
+    ),
+    inc_curr_window as (
+        select count(*) as n from stg_incidents i
+        join dim_tower t using (tower_id)
+        where i.opened_at >= current_timestamp - interval 7 day
+              {site_filter_clause}
     )
     select
-        (select n from active_t)     as active_towers,
-        (select n from active_d)     as active_deployments,
-        (select n from open_inc)     as open_incidents,
-        (select n from crit_inc)     as critical_open,
-        (select up from avg_uptime)  as uptime_7d,
-        (select n from failed_comp)  as failed_components_30d
+        (select n from active_t)               as active_towers,
+        (select n from active_d)               as active_deployments,
+        (select n from open_inc)               as open_incidents,
+        (select n from crit_inc)               as critical_open,
+        (select up from uptime_curr)           as uptime_7d,
+        (select up from uptime_prev)           as uptime_prev_7d,
+        (select n from failed_curr)            as failed_components_30d,
+        (select n from failed_prev)            as failed_components_prev_30d,
+        (select n from inc_curr_window)        as inc_opened_7d,
+        (select n from inc_prev)               as inc_opened_prev_7d
 """).iloc[0]
+
+def _delta(curr, prev, good_direction: str = "down") -> str | None:
+    """Return a formatted delta string. good_direction='down' means lower = better."""
+    try:
+        d = float(curr) - float(prev)
+        if abs(d) < 0.05:
+            return None
+        return f"{d:+.1f}"
+    except Exception:
+        return None
+
+uptime_delta = _delta(kpi.uptime_7d or 0, kpi.uptime_prev_7d or 0, good_direction="up")
+fail_delta   = _delta(kpi.failed_components_30d, kpi.failed_components_prev_30d, good_direction="down")
+inc_delta    = _delta(kpi.inc_opened_7d, kpi.inc_opened_prev_7d, good_direction="down")
 
 c1, c2, c3, c4, c5, c6 = st.columns(6)
 c1.metric("Active Sentry Towers", int(kpi.active_towers))
 c2.metric("Active Patrol Missions", int(kpi.active_deployments))
-c3.metric("Open Incidents", int(kpi.open_incidents))
+c3.metric("Open Incidents", int(kpi.open_incidents),
+          delta=inc_delta, delta_color="inverse")
 c4.metric("Critical Alerts · P1+P2", int(kpi.critical_open))
 c5.metric(
     "Network Uptime · 7d",
     f"{kpi.uptime_7d:.1f}%" if pd.notna(kpi.uptime_7d) else "—",
+    delta=uptime_delta,
 )
-c6.metric("Sensor Failures · 30d", int(kpi.failed_components_30d))
+c6.metric("Sensor Failures · 30d", int(kpi.failed_components_30d),
+          delta=fail_delta, delta_color="inverse")
 
 
-tab_ops, tab_rel, tab_pipeline = st.tabs(["Operations", "Reliability", "Pipeline Health"])
-# Detection Analytics tab is added after Phase 3 data layer is complete
+tab_ops, tab_det, tab_rel, tab_pipeline = st.tabs(
+    ["Operations", "Detection Analytics", "Reliability", "Pipeline Health"]
+)
 
 
 # ---------------------------------------------------------------------------
@@ -401,8 +449,29 @@ with tab_ops:
     site_status = q(f"""
         select s.site_name, s.site_id, s.region, s.env,
                s.tower_count, s.active_tower_count, s.maintenance_tower_count,
-               s.lat, s.lng
+               s.lat, s.lng,
+               coalesce(d.dets_7d, 0) as dets_7d,
+               coalesce(d.open_incidents, 0) as open_incidents,
+               case
+                   when s.active_tower_count > 0
+                   then round(coalesce(d.dets_7d, 0) * 1.0 / s.active_tower_count, 1)
+                   else 0
+               end as dets_per_active_tower
         from dim_site s
+        left join (
+            select site_id,
+                   count(*) as dets_7d
+            from fct_detection_events
+            where detection_date >= current_date - 7
+            group by site_id
+        ) d on d.site_id = s.site_id
+        left join (
+            select t.site_id, count(*) as open_incidents
+            from stg_incidents i
+            join dim_tower t using (tower_id)
+            where i.closed_at is null
+            group by t.site_id
+        ) inc on inc.site_id = s.site_id
         where 1=1 {site_filter_clause.replace('site_id', 's.site_id')}
         order by s.tower_count desc
     """)
@@ -412,18 +481,29 @@ with tab_ops:
         fig = px.scatter_geo(
             site_status,
             lat="lat", lon="lng",
-            size="tower_count",
-            color="active_tower_count",
+            size="active_tower_count",
+            color="dets_per_active_tower",
             hover_name="site_name",
-            hover_data={"region": True, "env": True, "tower_count": True,
-                        "active_tower_count": True, "lat": False, "lng": False},
-            labels={"region": "Region", "env": "Terrain", "tower_count": "Towers",
-                    "active_tower_count": "Active"},
-            color_continuous_scale=[[0, PALETTE["tan"]],
+            hover_data={
+                "region": True, "env": True,
+                "active_tower_count": True,
+                "dets_7d": True,
+                "open_incidents": True,
+                "dets_per_active_tower": True,
+                "lat": False, "lng": False,
+            },
+            labels={
+                "region": "Region", "env": "Terrain",
+                "active_tower_count": "Active Towers",
+                "dets_7d": "Detections (7d)",
+                "open_incidents": "Open Incidents",
+                "dets_per_active_tower": "Dets / Tower (7d)",
+            },
+            color_continuous_scale=[[0, PALETTE["teal"]],
                                     [0.5, PALETTE["amber"]],
-                                    [1, PALETTE["amber_l"]]],
+                                    [1, PALETTE["brick"]]],
             scope="north america",
-            size_max=26,
+            size_max=28,
         )
         fig.update_geos(
             bgcolor="rgba(0,0,0,0)",
@@ -442,7 +522,7 @@ with tab_ops:
         )
         fig.update_layout(
             coloraxis_colorbar=dict(
-                title=dict(text="Active", font=dict(size=10, color=PALETTE["fg_dim"])),
+                title=dict(text="Dets/Tower", font=dict(size=10, color=PALETTE["fg_dim"])),
                 tickfont=dict(size=10, color=PALETTE["fg_dim"]),
                 thickness=10, len=0.5, x=1.0,
                 outlinewidth=0,
@@ -451,12 +531,12 @@ with tab_ops:
         )
         style_chart(fig, height=480, show_legend=False)
         st.plotly_chart(fig, width="stretch")
+        st.caption("Bubble size = active towers · Color = detection density (last 7 days per active tower)")
     with col_right:
-        display = site_status[["site_name", "region", "env",
-                               "tower_count", "active_tower_count",
-                               "maintenance_tower_count"]].copy()
-        display.columns = ["Site", "Region", "Terrain",
-                           "Towers", "Active", "Maintenance"]
+        display = site_status[["site_name", "region", "env", "active_tower_count",
+                               "maintenance_tower_count", "dets_7d", "open_incidents"]].copy()
+        display.columns = ["Site", "Region", "Terrain", "Active", "Maintenance",
+                           "Dets (7d)", "Open Incidents"]
         st.dataframe(display, hide_index=True, width="stretch", height=480)
 
     col_a, col_b = st.columns(2, gap="large")
@@ -537,6 +617,230 @@ with tab_ops:
         )
     else:
         st.dataframe(low_inv, hide_index=True, width="stretch")
+
+
+# ---------------------------------------------------------------------------
+# DETECTION ANALYTICS
+# ---------------------------------------------------------------------------
+with tab_det:
+
+    # ---- KPIs --------------------------------------------------------------
+    det_kpi = q(f"""
+        with base as (
+            select * from fct_detection_events
+            where 1=1 {site_filter_clause}
+        ),
+        window_7d as (select * from base where detection_date >= current_date - 7),
+        window_prev as (
+            select * from base
+            where detection_date >= current_date - 14 and detection_date < current_date - 7
+        )
+        select
+            (select count(*)                                         from base)           as total_dets,
+            (select count(*)                                         from window_7d)      as dets_7d,
+            (select count(*)                                         from window_prev)    as dets_prev_7d,
+            (select round(avg(auto_resolved::int)*100,1)             from base)           as auto_resolve_pct,
+            (select round(avg(escalated_to_operator::int)*100,1)     from base)           as escalation_pct,
+            (select round(avg(false_positive::int)*100,1)            from base)           as fp_pct,
+            (select round(avg(confidence_score)*100,1)               from base)           as avg_confidence
+    """).iloc[0]
+
+    lat_kpi = q(f"""
+        select
+            round(percentile_cont(0.50) within group (order by total_response_s), 0) as p50,
+            round(percentile_cont(0.95) within group (order by total_response_s), 0) as p95,
+            round(percentile_cont(0.99) within group (order by total_response_s), 0) as p99
+        from fct_alert_pipeline_latency
+        where 1=1 {site_filter_clause}
+    """).iloc[0]
+
+    delta_dets = int(det_kpi.dets_7d) - int(det_kpi.dets_prev_7d)
+    delta_sign = f"+{delta_dets}" if delta_dets >= 0 else str(delta_dets)
+
+    k1, k2, k3, k4, k5 = st.columns(5)
+    k1.metric("Detections · 7d", int(det_kpi.dets_7d), delta=delta_sign)
+    k2.metric("Auto-Resolve Rate", f"{det_kpi.auto_resolve_pct:.1f}%")
+    k3.metric("Escalation Rate", f"{det_kpi.escalation_pct:.1f}%")
+    k4.metric("False Positive Rate", f"{det_kpi.fp_pct:.1f}%")
+    k5.metric("Avg Confidence", f"{det_kpi.avg_confidence:.1f}%")
+
+    st.markdown("## Detection Volume · By Target Class")
+
+    vol = q(f"""
+        select
+            detection_date,
+            target_class,
+            count(*) as detections
+        from fct_detection_events
+        where 1=1 {site_filter_clause}
+        group by detection_date, target_class
+        order by detection_date, target_class
+    """)
+    if len(vol) > 0:
+        CLASS_COLORS = {
+            "human":   PALETTE["amber"],
+            "vehicle": PALETTE["teal"],
+            "UAS":     PALETTE["brick"],
+            "unknown": PALETTE["grey"],
+        }
+        fig = px.bar(
+            vol, x="detection_date", y="detections", color="target_class",
+            labels={"detection_date": "", "detections": "Detections", "target_class": ""},
+            color_discrete_map=CLASS_COLORS,
+            category_orders={"target_class": ["human", "vehicle", "UAS", "unknown"]},
+            barmode="stack",
+        )
+        fig.update_traces(marker_line_width=0)
+        style_chart(fig, height=300)
+        st.plotly_chart(fig, width="stretch")
+
+    col_l, col_r = st.columns(2, gap="large")
+    with col_l:
+        st.markdown("## Classification Breakdown")
+        breakdown = q(f"""
+            select
+                target_class,
+                count(*) as detections,
+                round(avg(confidence_score)*100,1) as avg_confidence_pct,
+                round(avg(false_positive::int)*100,1) as fp_rate_pct
+            from fct_detection_events
+            where 1=1 {site_filter_clause}
+            group by target_class
+            order by detections desc
+        """)
+        if len(breakdown) > 0:
+            fig = px.bar(
+                breakdown, x="detections", y="target_class",
+                color="target_class",
+                orientation="h",
+                labels={"detections": "Total Detections", "target_class": ""},
+                color_discrete_map=CLASS_COLORS,
+                text="avg_confidence_pct",
+            )
+            fig.update_traces(
+                texttemplate="%{text:.0f}% conf",
+                textposition="inside",
+                marker_line_width=0,
+            )
+            style_chart(fig, height=280, show_legend=False)
+            st.plotly_chart(fig, width="stretch")
+
+    with col_r:
+        st.markdown("## Time-of-Day Pattern")
+        tod = q(f"""
+            select
+                hour_of_day,
+                count(*) as detections,
+                round(avg(escalated_to_operator::int)*100,1) as escalation_pct
+            from fct_detection_events
+            where 1=1 {site_filter_clause}
+            group by hour_of_day
+            order by hour_of_day
+        """)
+        if len(tod) > 0:
+            fig = px.bar(
+                tod, x="hour_of_day", y="detections",
+                labels={"hour_of_day": "Hour (UTC)", "detections": "Detections"},
+                color="escalation_pct",
+                color_continuous_scale=[[0, PALETTE["teal"]], [0.5, PALETTE["amber"]], [1, PALETTE["brick"]]],
+            )
+            fig.update_traces(marker_line_width=0)
+            fig.update_layout(
+                coloraxis_colorbar=dict(
+                    title=dict(text="Escalation %", font=dict(size=10, color=PALETTE["fg_dim"])),
+                    tickfont=dict(size=10, color=PALETTE["fg_dim"]),
+                    thickness=10, len=0.6, x=1.0,
+                    outlinewidth=0,
+                )
+            )
+            style_chart(fig, height=280)
+            st.plotly_chart(fig, width="stretch")
+
+    st.markdown("## Alert Pipeline Latency")
+    st.caption(
+        "End-to-end response latency for escalated detections — from sensor trigger to operator "
+        "resolution. P95/P99 degradation during overnight shifts reveals operator staffing pressure."
+    )
+
+    lat_stages = q(f"""
+        select
+            'Detection → Alert'      as stage,
+            round(percentile_cont(0.50) within group (order by detection_to_alert_s),   1) as p50,
+            round(percentile_cont(0.95) within group (order by detection_to_alert_s),   1) as p95,
+            round(percentile_cont(0.99) within group (order by detection_to_alert_s),   1) as p99,
+            round(avg(detection_to_alert_s), 1)   as avg_s
+        from fct_alert_pipeline_latency where 1=1 {site_filter_clause}
+        union all
+        select
+            'Alert → Operator Notified',
+            round(percentile_cont(0.50) within group (order by alert_to_notify_s),   1),
+            round(percentile_cont(0.95) within group (order by alert_to_notify_s),   1),
+            round(percentile_cont(0.99) within group (order by alert_to_notify_s),   1),
+            round(avg(alert_to_notify_s), 1)
+        from fct_alert_pipeline_latency where 1=1 {site_filter_clause}
+        union all
+        select
+            'Notified → Operator Ack',
+            round(percentile_cont(0.50) within group (order by notify_to_ack_s),   1),
+            round(percentile_cont(0.95) within group (order by notify_to_ack_s),   1),
+            round(percentile_cont(0.99) within group (order by notify_to_ack_s),   1),
+            round(avg(notify_to_ack_s), 1)
+        from fct_alert_pipeline_latency where 1=1 {site_filter_clause}
+        union all
+        select
+            'Ack → Resolved',
+            round(percentile_cont(0.50) within group (order by ack_to_resolve_s),   1),
+            round(percentile_cont(0.95) within group (order by ack_to_resolve_s),   1),
+            round(percentile_cont(0.99) within group (order by ack_to_resolve_s),   1),
+            round(avg(ack_to_resolve_s), 1)
+        from fct_alert_pipeline_latency where 1=1 {site_filter_clause}
+        union all
+        select
+            'Total Response',
+            round(percentile_cont(0.50) within group (order by total_response_s),   1),
+            round(percentile_cont(0.95) within group (order by total_response_s),   1),
+            round(percentile_cont(0.99) within group (order by total_response_s),   1),
+            round(avg(total_response_s), 1)
+        from fct_alert_pipeline_latency where 1=1 {site_filter_clause}
+    """)
+
+    col_chart, col_table = st.columns([1.2, 1], gap="large")
+    with col_chart:
+        fig = px.bar(
+            lat_stages[lat_stages["stage"] != "Total Response"],
+            x="stage", y=["p50", "p95", "p99"],
+            barmode="group",
+            labels={"stage": "", "value": "Seconds", "variable": ""},
+            color_discrete_map={
+                "p50": PALETTE["teal"],
+                "p95": PALETTE["amber"],
+                "p99": PALETTE["brick"],
+            },
+        )
+        fig.update_traces(marker_line_width=0)
+        style_chart(fig, height=300)
+        st.plotly_chart(fig, width="stretch")
+    with col_table:
+        lat_stages.columns = ["Stage", "P50 (s)", "P95 (s)", "P99 (s)", "Avg (s)"]
+        st.dataframe(lat_stages, hide_index=True, width="stretch", height=228)
+
+    st.markdown("## Per-Tower Detection Summary")
+    tower_det = q(f"""
+        select
+            d.tower_id                                        as "Tower ID",
+            d.site_name                                       as "Site",
+            count(*)                                          as "Detections",
+            round(avg(d.auto_resolved::int)*100, 1)          as "Auto-Resolve %",
+            round(avg(d.escalated_to_operator::int)*100, 1)  as "Escalation %",
+            round(avg(d.false_positive::int)*100, 1)         as "FP Rate %",
+            round(avg(d.confidence_score)*100, 1)            as "Avg Confidence %"
+        from fct_detection_events d
+        where 1=1 {site_filter_clause}
+        group by d.tower_id, d.site_name
+        order by "Escalation %" desc
+        limit 30
+    """)
+    st.dataframe(tower_det, hide_index=True, width="stretch", height=380)
 
 
 # ---------------------------------------------------------------------------
