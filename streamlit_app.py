@@ -380,17 +380,12 @@ kpi = q(f"""
           and failed_at <  current_timestamp - interval 30 day
               {site_filter_clause}
     ),
-    inc_prev as (
+    -- open as of 7 days ago: opened before the cutoff and not yet closed at cutoff
+    inc_open_7d_ago as (
         select count(*) as n from stg_incidents i
         join dim_tower t using (tower_id)
-        where i.opened_at >= current_timestamp - interval 14 day
-          and i.opened_at <  current_timestamp - interval 7 day
-              {site_filter_clause}
-    ),
-    inc_curr_window as (
-        select count(*) as n from stg_incidents i
-        join dim_tower t using (tower_id)
-        where i.opened_at >= current_timestamp - interval 7 day
+        where i.opened_at <= current_timestamp - interval 7 day
+          and (i.closed_at is null or i.closed_at > current_timestamp - interval 7 day)
               {site_filter_clause}
     )
     select
@@ -402,23 +397,25 @@ kpi = q(f"""
         (select up from uptime_prev)           as uptime_prev_7d,
         (select n from failed_curr)            as failed_components_30d,
         (select n from failed_prev)            as failed_components_prev_30d,
-        (select n from inc_curr_window)        as inc_opened_7d,
-        (select n from inc_prev)               as inc_opened_prev_7d
+        (select n from inc_open_7d_ago)        as inc_open_7d_ago
 """).iloc[0]
 
-def _delta(curr, prev, good_direction: str = "down") -> str | None:
-    """Return a formatted delta string. good_direction='down' means lower = better."""
+def _delta(curr, prev) -> str | None:
+    """Return a formatted delta string, or None if either value is missing/NaN."""
     try:
-        d = float(curr) - float(prev)
+        c, p = float(curr), float(prev)
+        if not (pd.notna(c) and pd.notna(p)):
+            return None
+        d = c - p
         if abs(d) < 0.05:
             return None
         return f"{d:+.1f}"
     except Exception:
         return None
 
-uptime_delta = _delta(kpi.uptime_7d or 0, kpi.uptime_prev_7d or 0, good_direction="up")
-fail_delta   = _delta(kpi.failed_components_30d, kpi.failed_components_prev_30d, good_direction="down")
-inc_delta    = _delta(kpi.inc_opened_7d, kpi.inc_opened_prev_7d, good_direction="down")
+uptime_delta = _delta(kpi.uptime_7d, kpi.uptime_prev_7d)
+fail_delta   = _delta(kpi.failed_components_30d, kpi.failed_components_prev_30d)
+inc_delta    = _delta(kpi.open_incidents, kpi.inc_open_7d_ago)
 
 c1, c2, c3, c4, c5, c6 = st.columns(6)
 c1.metric("Active Sentry Towers", int(kpi.active_towers))
@@ -446,25 +443,13 @@ tab_ops, tab_det, tab_rel, tab_pipeline = st.tabs(
 with tab_ops:
     st.markdown("## Sentry Deployment Map")
 
+    # Base site query — no dependency on new tables
     site_status = q(f"""
         select s.site_name, s.site_id, s.region, s.env,
                s.tower_count, s.active_tower_count, s.maintenance_tower_count,
                s.lat, s.lng,
-               coalesce(d.dets_7d, 0) as dets_7d,
-               coalesce(d.open_incidents, 0) as open_incidents,
-               case
-                   when s.active_tower_count > 0
-                   then round(coalesce(d.dets_7d, 0) * 1.0 / s.active_tower_count, 1)
-                   else 0
-               end as dets_per_active_tower
+               coalesce(inc.open_incidents, 0) as open_incidents
         from dim_site s
-        left join (
-            select site_id,
-                   count(*) as dets_7d
-            from fct_detection_events
-            where detection_date >= current_date - 7
-            group by site_id
-        ) d on d.site_id = s.site_id
         left join (
             select t.site_id, count(*) as open_incidents
             from stg_incidents i
@@ -476,13 +461,39 @@ with tab_ops:
         order by s.tower_count desc
     """)
 
+    # Enrich with detection density; degrade gracefully if fct_detection_events is missing
+    try:
+        det_density = q("""
+            select site_id, count(*) as dets_7d
+            from fct_detection_events
+            where detection_date >= current_date - 7
+            group by site_id
+        """)
+        site_status = site_status.merge(det_density, on="site_id", how="left")
+        site_status["dets_7d"] = site_status["dets_7d"].fillna(0).astype(int)
+        site_status["dets_per_active_tower"] = (
+            site_status["dets_7d"] /
+            site_status["active_tower_count"].replace(0, float("nan"))
+        ).fillna(0).round(1)
+        _map_color      = "dets_per_active_tower"
+        _map_color_label = "Dets / Tower (7d)"
+        _map_colorscale  = [[0, PALETTE["teal"]], [0.5, PALETTE["amber"]], [1, PALETTE["brick"]]]
+        _map_colorbar    = "Dets/Tower"
+    except Exception:
+        site_status["dets_7d"] = 0
+        site_status["dets_per_active_tower"] = 0
+        _map_color       = "active_tower_count"
+        _map_color_label = "Active Towers"
+        _map_colorscale  = [[0, PALETTE["tan"]], [0.5, PALETTE["amber"]], [1, PALETTE["amber_l"]]]
+        _map_colorbar    = "Active"
+
     col_left, col_right = st.columns([1.4, 1])
     with col_left:
         fig = px.scatter_geo(
             site_status,
             lat="lat", lon="lng",
             size="active_tower_count",
-            color="dets_per_active_tower",
+            color=_map_color,
             hover_name="site_name",
             hover_data={
                 "region": True, "env": True,
@@ -497,11 +508,9 @@ with tab_ops:
                 "active_tower_count": "Active Towers",
                 "dets_7d": "Detections (7d)",
                 "open_incidents": "Open Incidents",
-                "dets_per_active_tower": "Dets / Tower (7d)",
+                "dets_per_active_tower": _map_color_label,
             },
-            color_continuous_scale=[[0, PALETTE["teal"]],
-                                    [0.5, PALETTE["amber"]],
-                                    [1, PALETTE["brick"]]],
+            color_continuous_scale=_map_colorscale,
             scope="north america",
             size_max=28,
         )
@@ -522,7 +531,7 @@ with tab_ops:
         )
         fig.update_layout(
             coloraxis_colorbar=dict(
-                title=dict(text="Dets/Tower", font=dict(size=10, color=PALETTE["fg_dim"])),
+                title=dict(text=_map_colorbar, font=dict(size=10, color=PALETTE["fg_dim"])),
                 tickfont=dict(size=10, color=PALETTE["fg_dim"]),
                 thickness=10, len=0.5, x=1.0,
                 outlinewidth=0,
@@ -535,8 +544,8 @@ with tab_ops:
     with col_right:
         display = site_status[["site_name", "region", "env", "active_tower_count",
                                "maintenance_tower_count", "dets_7d", "open_incidents"]].copy()
-        display.columns = ["Site", "Region", "Terrain", "Active", "Maintenance",
-                           "Dets (7d)", "Open Incidents"]
+        display.columns = ["Site", "Region", "Terrain", "Active",
+                           "Maintenance", "Detections (7d)", "Open Incidents"]
         st.dataframe(display, hide_index=True, width="stretch", height=480)
 
     col_a, col_b = st.columns(2, gap="large")
