@@ -1,100 +1,122 @@
-# Sentinel Fleet Operations
+# Sentinel Mission Analytics
 
-Operational telemetry, reliability, and pipeline status for an autonomous
-sensor tower fleet. Synthetic data feeds a dbt project on DuckDB, which
-materializes a small star schema consumed by a Streamlit interface.
+**Detection intelligence, fleet sustainment, and pipeline telemetry for the Sentry autonomous surveillance network.**
 
-The application surfaces three operational views over a single fact layer:
+A data engineering portfolio project built to demonstrate end-to-end analytics for a distributed autonomous sensor fleet — synthetic data, a dbt star schema on DuckDB, and a Streamlit interface surfacing four operational views.
 
-| View | Audience | Questions answered |
+**Live app →** https://sentinel-fleet-ops.streamlit.app/
+
+---
+
+## What problem does this solve?
+
+A fleet of autonomous surveillance towers generates continuous telemetry, detection events, and subsystem failure data. Without a unified analytics layer, operators are answering three separate questions with three separate tools:
+
+1. *"Where are my towers and what threats are they seeing right now?"* — Operations
+2. *"Are my detection pipelines alerting fast enough?"* — Mission effectiveness
+3. *"Are sensors staying healthy and are parts available to fix failures?"* — Sustainment
+
+This platform integrates all three views onto a single compiled DuckDB file, so numbers are consistent and there is no latency from joining across systems at query time.
+
+---
+
+## Views and audiences
+
+| View | Audience | Key question answered |
 |---|---|---|
-| Operations | Site leads, ops managers | Where are towers and what are they running? What is open or broken? Are any parts about to run out? |
-| Reliability | Reliability and sustainment engineering | Are components hitting their MTBF targets? How is uptime trending? What categories of failure dominate the last 30 days? |
-| Pipeline Health | Data team and downstream consumers | Did the last build pass? How fresh is each source? What is the run elapsed time? |
+| **Operations** | Site leads, mission commanders | Where is coverage deployed? Which sites have the highest detection density? What incidents are open? |
+| **Detection Analytics** | Mission analysts, product engineers | What is the target classification breakdown? How fast does the alert pipeline deliver escalations to operators? Where does latency accumulate overnight? |
+| **Reliability** | Sustainment and reliability engineering | Which subsystems are missing their MTBF targets? How is network uptime trending? What failure signatures recur? |
+| **Pipeline Health** | Data engineering | Did the last dbt build pass? Is telemetry fresh? What are the per-model execution times? |
 
 ---
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    A[Synthetic generator<br/>scripts/generate_data.py] -->|parquet| B[(data/raw/*.parquet)]
-    B -->|read_parquet| C[dbt-duckdb<br/>staging tables]
-    C --> D[dbt-duckdb<br/>marts: dims and facts]
-    D --> E[(data/sentinel.duckdb)]
-    D -.->|run_results.json<br/>manifest.json| F[Pipeline Health view]
-    E --> G[Streamlit interface]
+```
+scripts/generate_data.py
+         │
+         ▼ 9 parquet files (83K rows, deterministic seed=42)
+data/raw/*.parquet
+         │
+         ▼ dbt-duckdb: staging (type casts, no logic)
+stg_sites · stg_towers · stg_telemetry · stg_deployments
+stg_incidents · stg_components · stg_inventory
+stg_detections · stg_alert_pipeline
+         │
+         ▼ dbt-duckdb: marts (star schema)
+dim_site · dim_tower
+fct_fleet_health_daily · fct_deployment_status
+fct_component_reliability · fct_inventory_status
+fct_detection_events · fct_alert_pipeline_latency
+         │
+         ▼ compiled once, shipped as a static artifact
+data/sentinel.duckdb  (read-only at runtime)
+         │
+         ▼ Streamlit + Plotly
+sentinel-fleet-ops.streamlit.app
 ```
 
-**Stack:** Python · DuckDB · dbt-duckdb · Streamlit · Plotly
+**Why DuckDB?** An embedded OLAP engine is the right fit here: no separate server process, the compiled database ships with the repo, and it runs efficiently in Streamlit Community Cloud's constrained environment. In a real Sentry deployment, this pattern maps naturally to air-gapped or edge scenarios where a remote database connection is unreliable.
 
-The application reads exclusively from the compiled DuckDB file. dbt does not
-run at serve time — the build is performed offline and the resulting database
-is shipped as a static artifact.
+**Stack:** Python · DuckDB · dbt-duckdb · Streamlit · Plotly · IBM Plex fonts
 
 ---
 
-## Models
+## Data model
 
-**Sources (raw parquet):** `sites`, `towers`, `telemetry`, `deployments`,
-`incidents`, `components`, `inventory`.
+### Dimensions
 
-**Staging** — one model per source, materialized as tables. Type casts and
-soft renames only; no business logic.
-
-| Model | Source |
-|---|---|
-| `stg_sites` | `sites.parquet` |
-| `stg_towers` | `towers.parquet` |
-| `stg_telemetry` | `telemetry.parquet` |
-| `stg_deployments` | `deployments.parquet` |
-| `stg_incidents` | `incidents.parquet` |
-| `stg_components` | `components.parquet` |
-| `stg_inventory` | `inventory.parquet` |
-
-**Marts** — materialized as tables.
-
-| Model | Grain | Purpose |
+| Model | Grain | Description |
 |---|---|---|
-| `dim_site` | one row per site | Sites enriched with active and total tower counts |
-| `dim_tower` | one row per tower | Towers joined to site metadata, age in days |
-| `fct_fleet_health_daily` | tower × day | Averaged telemetry, comms uptime %, sensor health, incidents opened |
-| `fct_deployment_status` | one row per deployment | Mission, site, duration in hours and days, status |
-| `fct_component_reliability` | one row per component | Observed hours, target MTBF, actual-vs-target ratio |
-| `fct_inventory_status` | one row per part number | Available stock, four-level `stock_status` (`critical` / `reorder` / `watch` / `healthy`) |
+| `dim_site` | one row per site | 10 US sites with lat/lng, region, terrain, tower counts |
+| `dim_tower` | one row per tower | 60 towers across 3 models (V2/V3/V3-Mast), age in days, site FK |
 
-**Tests** — 39 dbt tests covering uniqueness on every primary key, not-null on
-foreign keys, `accepted_values` on enum columns (`status`, `severity`,
-`component_type`, `stock_status`, `env`), and `relationships` from staging
-back to upstream dimensions. Source-level freshness is configured on
-telemetry in `dbt/models/staging/sources.yml`.
+### Facts
+
+| Model | Grain | Key fields |
+|---|---|---|
+| `fct_fleet_health_daily` | tower × day | avg CPU/mem/sensor health, comms uptime %, incidents opened |
+| `fct_deployment_status` | one row per deployment | mission, site, status, duration hours/days |
+| `fct_component_reliability` | one row per component | observed hours, target MTBF, failure flag |
+| `fct_inventory_status` | one row per part number | on-hand, allocated, available, 4-level stock status |
+| `fct_detection_events` | one row per detection | target class, confidence score, bearing/range, auto-resolved flag, time-of-day bucket |
+| `fct_alert_pipeline_latency` | one row per escalated detection | 5-stage latency chain: detection → alert → notify → ack → resolve |
+
+### Detection data design decisions
+
+**Target classification weights** are set to realistic border patrol distributions: ~50% human, ~25% vehicle, ~15% UAS, ~10% unknown. Confidence scores vary by class — UAS and unknown have lower mean confidence (0.65/0.45 vs. 0.82/0.87 for human/vehicle), which drives the auto-resolve cutoff.
+
+**Auto-resolve threshold** is `confidence >= 0.85 AND target_class != 'unknown'`. Everything below escalates to an operator. This creates a realistic ~65% auto-resolve rate with a meaningful escalation queue.
+
+**Alert pipeline latency** is modeled with an overnight degradation multiplier (2–4×) on the notify→ack stage, reflecting reduced operator staffing. This makes the P95/P99 split informative: P50 ~21 min, P99 ~42 min, with overnight gaps clearly visible in the time-of-day chart.
+
+**Site-specific detection rates** range from 4.0 detections/tower/day (Border Sector A) down to 0.5 (Northern Tundra), making the map's detection-density encoding immediately meaningful.
+
+### dbt tests
+
+66 total tests: uniqueness on every PK, `not_null` on FKs, `accepted_values` on all enums (`status`, `severity`, `target_class`, `time_of_day`, `component_type`, `stock_status`, `env`), `relationships` from staging to upstream dims. Source freshness configured on `telemetry`, `detections`, and `alert_pipeline` with 6-hour warn / 24-hour error thresholds.
 
 ---
 
 ## Local setup
 
 ```bash
-# 1. Virtualenv with dev dependencies (includes dbt and numpy).
-python3 -m venv .venv
-source .venv/bin/activate
+# 1. Install dev dependencies (includes dbt-duckdb, numpy, pyarrow)
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 
-# 2. Generate the synthetic source data.
+# 2. Regenerate synthetic source data (9 parquet files → data/raw/)
 python scripts/generate_data.py
 
-# 3. Build the dbt project. Produces data/sentinel.duckdb.
-cd dbt
-DBT_PROFILES_DIR=. dbt build
-cd ..
+# 3. Build the dbt project (materializes sentinel.duckdb)
+cd dbt && dbt build --profiles-dir . --project-dir . && cd ..
 
-# 4. Serve the Streamlit interface.
+# 4. Serve the interface
 streamlit run streamlit_app.py
 ```
 
-Runtime dependencies (`requirements.txt`) include only what the Streamlit
-process needs to serve the application: `streamlit`, `duckdb`, `pandas`, and
-`plotly`. The compiled DuckDB file and dbt run artifacts are shipped with
-the repository, so no build step runs in production.
+Runtime only needs `requirements.txt` (streamlit, duckdb, pandas, plotly). The compiled database and dbt artifacts ship with the repo — no build step runs in production.
 
 ---
 
@@ -102,68 +124,49 @@ the repository, so no build step runs in production.
 
 ```
 sentinel-fleet-ops/
-├── .streamlit/config.toml         # theme + runtime config
+├── .github/workflows/keep-alive.yml  # pings app twice daily (Streamlit stay-alive)
+├── .streamlit/config.toml            # theme + server config
 ├── data/
-│   ├── raw/                       # parquet sources
-│   └── sentinel.duckdb            # compiled marts (read-only at runtime)
+│   ├── raw/                          # 9 parquet source files
+│   └── sentinel.duckdb               # compiled marts (read-only at runtime)
 ├── dbt/
 │   ├── dbt_project.yml
 │   ├── profiles.yml
 │   ├── models/
-│   │   ├── staging/               # one model per source + sources.yml + tests
-│   │   └── marts/                 # 6 marts + schema.yml tests
-│   └── target/                    # run_results.json + manifest.json (committed)
+│   │   ├── staging/                  # 9 models + sources.yml + schema tests
+│   │   └── marts/                    # 8 mart models + schema tests
+│   └── target/                       # run_results.json (committed, parsed at runtime)
 ├── scripts/
-│   └── generate_data.py           # deterministic synthetic generator
-├── streamlit_app.py               # interface entry point
-├── requirements.txt               # runtime
-└── requirements-dev.txt           # build (includes dbt)
+│   └── generate_data.py              # deterministic synthetic generator (seed=42)
+├── streamlit_app.py                  # Streamlit entry point (~1,000 lines)
+├── requirements.txt                  # runtime (streamlit, duckdb, pandas, plotly)
+└── requirements-dev.txt              # build (adds dbt-core, dbt-duckdb, numpy, pyarrow)
 ```
 
 ---
 
-## Design notes
+## Engineering decisions
 
-- **Single fact layer, multiple personas.** The same daily fleet-health fact
-  drives both the Operations top-line metrics and the Reliability uptime
-  trend. Numbers stay consistent across views without per-tab logic.
-- **Staging materialized as tables.** Streamlit reads from the compiled
-  DuckDB file with no working-directory assumptions; the application is fully
-  decoupled from the source parquet locations once the build completes.
-- **dbt artifacts surfaced in the interface.** `run_results.json` and
-  `manifest.json` ship alongside the database. The Pipeline Health view
-  parses them at runtime to display pass / fail counts, elapsed time, and the
-  build timestamp — closing the loop between the build job and the consumer.
-- **Stock status uses four levels rather than a single boolean.** Operations
-  leads need prioritization on what to act on first, not a flat list of
-  parts that are below threshold.
-- **Synthetic generator is deterministic.** Fixed seed produces a stable
-  dataset across runs, with per-tower bias terms so telemetry is not
-  homogeneous.
+**Static artifact pattern.** dbt builds once and the resulting DuckDB file ships with the repo. The Streamlit process reads it with `duckdb.connect(read_only=True)` — no working-directory coupling to parquet files at runtime. This simplifies deployment and makes the production environment identical to local.
+
+**Staging materialized as tables, not views.** Views re-execute parquet reads on every query. Materializing staging eliminates that overhead and lets the mart layer join against in-memory tables.
+
+**Grain choices are explicit and annotated.** `fct_fleet_health_daily` is at tower × day grain — not site × day — so per-tower reliability differences are preserved when aggregating up. `fct_alert_pipeline_latency` is at detection_id grain so percentile calculations run over individual events, not averages of averages.
+
+**Four-level stock status.** `critical / reorder / watch / healthy` gives operations leads prioritization signal. A single boolean `below_threshold` flattens information that ops leads need to triage.
+
+**Detection density on the map, not tower count.** Coloring by `dets_per_active_tower` instead of `active_tower_count` reveals which sites are operationally active, not just where hardware was deployed.
 
 ---
 
 ## Roadmap
 
-1. **Source freshness alerting.** Connect the freshness rules in `sources.yml`
-   to a notification channel so stale telemetry escalates without requiring a
-   user to load the dashboard.
-2. **Streaming ingest path.** Replace the batch parquet generator with a Kafka
-   producer and an ingestion job, so telemetry lands continuously.
-3. **Component lifecycle forecasting.** Extend `fct_component_reliability` to
-   project failure windows from observed-vs-target ratios, surfaced as a
-   proactive replacement queue tied to inventory.
-4. **Site cohort analysis.** Group sites by environment (`coastal`, `desert`,
-   `tundra`, ...) and ship a comparative cohort view for failure categories
-   and uptime — useful when prioritizing hardware revisions.
-5. **Role-aware views.** Filter tabs by role so site leads see only their
-   sites and engineering retains the full-fleet view.
-6. **MRP integration.** Replace the synthetic inventory source with a
-   connector to a real MRP system; reconcile on-hand against allocated and
-   requisitioned quantities.
+1. **Streaming ingest path.** Replace the batch parquet generator with a continuous producer so telemetry and detections land in near-real-time.
+2. **Component lifecycle forecasting.** Extend `fct_component_reliability` to project remaining life from observed-vs-target MTBF ratios, surfaced as a proactive replacement queue prioritized against inventory.
+3. **Operator workload analysis.** Add a shift × site grain table tracking escalations per operator-hour, making overnight staffing pressure quantifiable rather than inferred from latency outliers.
+4. **Environmental performance cohorts.** Group sites by terrain type and surface a comparative view for failure signatures and uptime — useful when deciding hardware spec changes for coastal vs. desert vs. tundra deployments.
+5. **Source freshness alerting.** Wire the dbt freshness thresholds to a notification channel so stale telemetry escalates automatically without requiring a dashboard load.
 
 ---
 
-## License
-
-Personal project. Synthetic data only.
+*Synthetic data only. No classified or proprietary information.*
