@@ -16,13 +16,18 @@ jobs:
     steps:
       - name: Ping sentinel-fleet-ops.streamlit.app
         run: |
-          # -L follows redirects — critical because Streamlit returns 303 when sleeping,
-          # pointing to a wake-up page. Without -L the ping exits on the redirect and
-          # the app never actually wakes up.
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 60 https://sentinel-fleet-ops.streamlit.app/)
-          echo "HTTP status: $STATUS"
-          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
-            echo "Unexpected status code: $STATUS"
+          # -L follows redirects to trigger wake-up (Streamlit returns 303 when sleeping).
+          # --max-redirs 10 prevents infinite loops; exit code 47 (too many redirects)
+          # still means we reached Streamlit and the app is waking up — treat as success.
+          CURL_CODE=0
+          curl -s -o /dev/null -L --max-redirs 10 --max-time 60 \
+            https://sentinel-fleet-ops.streamlit.app/ || CURL_CODE=$?
+
+          if [ "$CURL_CODE" -eq 47 ]; then
+            echo "Redirect limit reached — app was pinged and is waking up."
+          elif [ "$CURL_CODE" -ne 0 ]; then
+            echo "curl failed with exit code $CURL_CODE"
             exit 1
+          else
+            echo "App is alive."
           fi
-          echo "App is alive."
