@@ -16,7 +16,10 @@ jobs:
     steps:
       - name: Ping sentinel-fleet-ops.streamlit.app
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://sentinel-fleet-ops.streamlit.app/)
+          # -L follows redirects — critical because Streamlit returns 303 when sleeping,
+          # pointing to a wake-up page. Without -L the ping exits on the redirect and
+          # the app never actually wakes up.
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 60 https://sentinel-fleet-ops.streamlit.app/)
           echo "HTTP status: $STATUS"
           if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
             echo "Unexpected status code: $STATUS"
