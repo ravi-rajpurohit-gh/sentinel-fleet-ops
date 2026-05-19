@@ -272,6 +272,29 @@ def pipeline_status() -> tuple[str, str, str]:
 # Sidebar — filters
 # ---------------------------------------------------------------------------
 with st.sidebar:
+    st.markdown("""
+<div style="padding:0.1rem 0 1rem 0;">
+  <div style="font-size:0.65rem; font-weight:500; letter-spacing:0.14em; text-transform:uppercase;
+              color:#5a5754; font-family:'IBM Plex Mono',monospace; margin-bottom:0.55rem;">
+    About
+  </div>
+  <div style="font-size:0.78rem; color:#8a8784; line-height:1.65; font-family:'IBM Plex Sans',sans-serif;">
+    A data engineering portfolio project modelling mission analytics for an autonomous surveillance fleet —
+    detection events, alert pipeline latency, component reliability, and deployment coverage
+    across 10 sites and 60 towers.
+  </div>
+  <div style="margin-top:0.75rem; font-size:0.72rem; color:#5a5754;
+              font-family:'IBM Plex Mono',monospace; line-height:1.7;">
+    Synthetic data &nbsp;·&nbsp; dbt star schema<br>
+    DuckDB &nbsp;·&nbsp; Streamlit &nbsp;·&nbsp; Plotly<br>
+    <a href="https://github.com/ravi-rajpurohit-gh/sentinel-fleet-ops"
+       style="color:#5a5754; text-decoration:none;"
+       target="_blank">github.com ↗</a>
+  </div>
+</div>
+<hr style="border:none; border-top:1px solid #2a2826; margin:0 0 1rem 0;">
+""", unsafe_allow_html=True)
+
     st.markdown("## Filters")
 
     sites_df = q("select site_id, site_name, region from dim_site order by site_name")
