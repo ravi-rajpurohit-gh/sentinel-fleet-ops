@@ -12,11 +12,13 @@ jobs:
     name: Wake Streamlit App
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install Playwright + Chromium
         run: |
@@ -35,26 +37,31 @@ jobs:
             try {
               console.log('Navigating to app...');
               await page.goto('https://sentinel-fleet-ops.streamlit.app/', {
-                waitUntil: 'domcontentloaded',
+                waitUntil: 'load',
                 timeout: 60000,
               });
 
-              // Streamlit sleep screen button — try exact text first, then partial
-              const selectors = [
-                'text="Yes, get this app back up!"',
-                'button:has-text("get this app back up")',
-                'button:has-text("Wake")',
-              ];
+              // Let Streamlit's React shell finish rendering (sleep screen is JS-rendered)
+              await page.waitForTimeout(8000);
 
+              console.log(`Page URL after load: ${page.url()}`);
+              console.log(`Page title: ${await page.title()}`);
+
+              // waitForSelector gives the button up to 20s to appear after the initial wait
               let clicked = false;
-              for (const sel of selectors) {
-                const btn = page.locator(sel).first();
-                if (await btn.isVisible({ timeout: 3000 }).catch(() => false)) {
-                  console.log(`Sleep screen detected. Clicking: ${sel}`);
-                  await btn.click();
+              try {
+                const wakeBtn = await page.waitForSelector(
+                  'button:has-text("get this app back up"), button:has-text("Wake"), button:has-text("Yes")',
+                  { timeout: 20000 }
+                );
+                if (wakeBtn) {
+                  const label = await wakeBtn.innerText().catch(() => '?');
+                  console.log(`Sleep screen detected. Clicking button: "${label}"`);
+                  await wakeBtn.click();
                   clicked = true;
-                  break;
                 }
+              } catch {
+                // no sleep button found within timeout — app is already awake
               }
 
               if (clicked) {
