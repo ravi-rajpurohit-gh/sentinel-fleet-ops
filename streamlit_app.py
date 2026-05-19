@@ -279,7 +279,7 @@ with st.sidebar:
     About
   </div>
   <div style="font-size:0.78rem; color:#8a8784; line-height:1.65; font-family:'IBM Plex Sans',sans-serif;">
-    A data engineering portfolio project modelling mission analytics for an autonomous surveillance fleet —
+    Built to demonstrate end-to-end analytics engineering for autonomous sensor fleets —
     detection events, alert pipeline latency, component reliability, and deployment coverage
     across 10 sites and 60 towers.
   </div>
