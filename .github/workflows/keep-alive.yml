@@ -9,25 +9,68 @@ on:
 
 jobs:
   ping:
-    name: Ping Streamlit App
+    name: Wake Streamlit App
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
-      - name: Ping sentinel-fleet-ops.streamlit.app
-        run: |
-          # -L follows redirects to trigger wake-up (Streamlit returns 303 when sleeping).
-          # --max-redirs 10 prevents infinite loops; exit code 47 (too many redirects)
-          # still means we reached Streamlit and the app is waking up — treat as success.
-          CURL_CODE=0
-          curl -s -o /dev/null -L --max-redirs 10 --max-time 60 \
-            https://sentinel-fleet-ops.streamlit.app/ || CURL_CODE=$?
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-          if [ "$CURL_CODE" -eq 47 ]; then
-            echo "Redirect limit reached — app was pinged and is waking up."
-          elif [ "$CURL_CODE" -ne 0 ]; then
-            echo "curl failed with exit code $CURL_CODE"
-            exit 1
-          else
-            echo "App is alive."
-          fi
+      - name: Install Playwright + Chromium
+        run: |
+          npm install playwright
+          npx playwright install chromium --with-deps
+
+      - name: Wake sentinel-fleet-ops.streamlit.app
+        run: |
+          cat > wake.js << 'EOF'
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+
+            try {
+              console.log('Navigating to app...');
+              await page.goto('https://sentinel-fleet-ops.streamlit.app/', {
+                waitUntil: 'domcontentloaded',
+                timeout: 60000,
+              });
+
+              // Streamlit sleep screen button — try exact text first, then partial
+              const selectors = [
+                'text="Yes, get this app back up!"',
+                'button:has-text("get this app back up")',
+                'button:has-text("Wake")',
+              ];
+
+              let clicked = false;
+              for (const sel of selectors) {
+                const btn = page.locator(sel).first();
+                if (await btn.isVisible({ timeout: 3000 }).catch(() => false)) {
+                  console.log(`Sleep screen detected. Clicking: ${sel}`);
+                  await btn.click();
+                  clicked = true;
+                  break;
+                }
+              }
+
+              if (clicked) {
+                console.log('Wake button clicked. Waiting 45s for app to boot...');
+                await page.waitForTimeout(45000);
+                console.log('App should be awake.');
+              } else {
+                console.log('App is already awake — no sleep screen detected.');
+              }
+
+            } finally {
+              await browser.close();
+            }
+          })().catch(err => {
+            console.error('Error:', err.message);
+            process.exit(1);
+          });
+          EOF
+          node wake.js
