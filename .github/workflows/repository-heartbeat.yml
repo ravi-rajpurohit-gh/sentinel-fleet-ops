@@ -1,0 +1,52 @@
+name: Keep Repository Active
+
+on:
+  schedule:
+    # Keep public scheduled workflows from crossing GitHub's 60-day inactivity window.
+    - cron: "35 6 1,15 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repository-heartbeat
+  cancel-in-progress: false
+
+jobs:
+  heartbeat:
+    name: Record Activity Heartbeat
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Commit heartbeat to repo-activity branch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --heads origin repo-activity >/dev/null 2>&1; then
+            git fetch origin repo-activity
+            git switch repo-activity
+          else
+            git switch --orphan repo-activity
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          mkdir -p .github/heartbeat
+          cat > .github/heartbeat/README.md <<'EOF'
+          This branch is updated by GitHub Actions to keep scheduled workflows active.
+          It is intentionally separate from the default branch and app deployment source.
+          EOF
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/heartbeat/last-run.txt
+
+          git add .github/heartbeat/README.md .github/heartbeat/last-run.txt
+          git commit -m "chore: record repository heartbeat"
+          git push origin repo-activity
